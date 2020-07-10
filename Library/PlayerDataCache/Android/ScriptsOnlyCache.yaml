@@ -22,8 +22,6 @@ ScriptsOnlyBuild:
     - UnityEngine.UI.GraphicRaycaster
     - UnityEngine.UI.Image
     - UnityEngine.UI.Text
-    com.unity.multiplayer-hlapi.Runtime.dll:
-    - UnityEngine.Networking.NetworkCallbacks
   sceneClasses:
     Assets/Scenes/SampleScene.unity:
     - Class: 1
@@ -53,21 +51,21 @@ ScriptsOnlyBuild:
     - Class: 108
       Script: {instanceID: 0}
     - Class: 114
-      Script: {instanceID: 11194}
+      Script: {instanceID: 11198}
     - Class: 114
-      Script: {instanceID: 11214}
+      Script: {instanceID: 11218}
     - Class: 114
-      Script: {instanceID: 11494}
+      Script: {instanceID: 11502}
     - Class: 114
-      Script: {instanceID: 12036}
+      Script: {instanceID: 12048}
     - Class: 114
-      Script: {instanceID: 12316}
+      Script: {instanceID: 12328}
     - Class: 114
-      Script: {instanceID: 12624}
+      Script: {instanceID: 12638}
     - Class: 114
-      Script: {instanceID: 13252}
+      Script: {instanceID: 13270}
     - Class: 114
-      Script: {instanceID: 13756}
+      Script: {instanceID: 13778}
     - Class: 115
       Script: {instanceID: 0}
     - Class: 128
@@ -369,7 +367,7 @@ ScriptsOnlyBuild:
     className: TMP_Asset
   - hash:
       serializedVersion: 2
-      Hash: 84cdabad75affd81c749d8a0e47634fd
+      Hash: 6c802926031407cf800ca9ca833ce671
     assemblyName: Assembly-CSharp.dll
     namespaceName: 
     className: Main

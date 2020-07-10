@@ -6,20 +6,21 @@ using UnityEngine.UI;
 
 public class Main : MonoBehaviour
 {
+    // linked in the inspector
     public GameObject stimulusPrefab;
     public GameObject exitButton;
     public GameObject startButton;
     public GameObject testSaveButton;
     public RenderTexture resultsTexture;
 
-
+    // list of Stimulus objects making up the field test
     private List<Stimulus> stimulusField;
 
     // state variables for testing and input
     private bool inTest, abortTest;
     private bool stimulusSeen;
-    private bool inputTimeout;
 
+    // used for the abort test functionality
     private float lastTouchStartTime;
 
     // simple timer to trigger on user timeout
@@ -27,6 +28,7 @@ public class Main : MonoBehaviour
 
     void Start()
     {
+        Debug.Log(System.DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss"));
         Debug.Log("Starting app...");
         Debug.Log("Screen size: " + Screen.width + ", " + Screen.height);
 
@@ -51,14 +53,17 @@ public class Main : MonoBehaviour
         // create the timeout timer
         tot = new TimeoutTimer();
 
+        // create the stimulus field objects
         buildStimulusField();
     }
 
     // Update is called once per frame
     void Update()
     {
+        // detect any touching of the screen
         if (Input.touchCount > 0)
         {
+            // only 1 finger
             if (Input.touchCount == 1)
             {
                 Touch touch = Input.GetTouch(0);
@@ -70,7 +75,7 @@ public class Main : MonoBehaviour
                     if (touch.phase == TouchPhase.Began)
                     {
                         lastTouchStartTime = Time.time;
-                        Debug.Log("Touch input received...");
+                        //Debug.Log("Touch input received...");
                         stimulusSeen = true;
                     }
                     // else, if user holds for 3 seconds, abort the test
@@ -90,9 +95,11 @@ public class Main : MonoBehaviour
 
     void startButtonClick()
     {
+        // hide the buttons before beginning test
         startButton.SetActive(false);
         exitButton.SetActive(false);
         testSaveButton.SetActive(false);
+
         StartCoroutine(fieldTest2());
         //StartCoroutine(spawnTestStimulus());
         //StartCoroutine(spawnTestStimulus3());
@@ -105,6 +112,7 @@ public class Main : MonoBehaviour
 
     void buildStimulusField()
     {
+        // build the list of stimulus objects
         stimulusField = new List<Stimulus>();
 
         for (float y = 1.5f; y >= -1.5f; y -= 1.0f)
@@ -118,6 +126,7 @@ public class Main : MonoBehaviour
 
     void resetStimulusField()
     {
+        // reset all stimuli to full brightness
         foreach (Stimulus s in stimulusField)
             s.brightness = 1.0f;
     }
@@ -137,13 +146,14 @@ public class Main : MonoBehaviour
         // begin test (this will allow the timeout timer to update)
         inTest = true;
 
+        // iterate through stimuli
         foreach (Stimulus s in stimulusField)
         {
             // the ramp down is the steady decrease in brightness for a given stimulus until it's no longer visible
             inRampDown = true;
             while (inRampDown)
             {
-                // reset this each loops
+                // reset this each loop
                 stimulusSeen = false;
 
                 // show the stimulus at its current brightness
@@ -155,8 +165,10 @@ public class Main : MonoBehaviour
                 // hide it
                 s.hide();
 
-                // wait until timeout or user input indicates stimulus was seen
+                // start the timeout timer for 3 seconds
                 tot.start(3.0f);
+
+                // wait until the user indicates stimulus was seen, the timer times out, or the user aborts the test
                 yield return new WaitUntil(() => (stimulusSeen || tot.timeout || abortTest));
 
                 if (stimulusSeen)
@@ -174,9 +186,11 @@ public class Main : MonoBehaviour
                 else if (abortTest)
                 {
                     Debug.Log("Aborting test...");
+
                     stimulusSeen = false;
                     inTest = false;
                     abortTest = false;
+
                     startButton.SetActive(true);
                     exitButton.SetActive(true);
                     testSaveButton.SetActive(true);
@@ -187,7 +201,6 @@ public class Main : MonoBehaviour
         }
 
         // at this point, the stimulus objects contain the brighness values at the threshold of visibility
-
         foreach(Stimulus s in stimulusField)
         {
             Debug.Log("stimulus at (" + s.position.x + ", " + s.position.y + ") visible down to brightness " + s.brightness);
@@ -195,9 +208,11 @@ public class Main : MonoBehaviour
 
         
         Debug.Log("Test complete");
+
         stimulusSeen = false;
         inTest = false;
         abortTest = false;
+
         startButton.SetActive(true);
         exitButton.SetActive(true);
         testSaveButton.SetActive(true);
@@ -205,39 +220,40 @@ public class Main : MonoBehaviour
 
     public void testSave()
     {
+        // make all stimuli visible and move them behind main camera to z = -15.0f.
+        // this is in between the black quad "backdrop" (z = -10) and the results camera (z = -20)
         foreach(Stimulus s in stimulusField)
         {
             s.show();
             s.position.z = -15.0f;
         }
 
+        // coroutin finishes the job
         StartCoroutine(CoTestSave());
     }
 
     private IEnumerator CoTestSave()
     {
+        // wait until end of frame so we know all stimuli are on and have been moved
         yield return new WaitForEndOfFrame();
 
+        Debug.Log("Saving results to SmartHVF gallery...");
 
-
-        Debug.Log("Saving results to " + Application.dataPath + "/results.png");
-
+        // set the currently active render texture to the one used by the results camera
         RenderTexture.active = resultsTexture;
+        // create a temporary texture2d to copy this data into
         Texture2D temp = new Texture2D(resultsTexture.width, resultsTexture.height);
 
         temp.ReadPixels(new Rect(0, 0, resultsTexture.width, resultsTexture.height), 0, 0);
         temp.Apply();
 
+        // this plugin takes a texture2d. encodes to a .png image, and saves it to the gallery
         NativeGallery.SaveImageToGallery(temp, "SmartHVF", "results.png");
 
-        //byte[] data = temp.EncodeToPNG();
+        // get rid of temp texture
         Destroy(temp);
 
-        //File.WriteAllBytes(Application.dataPath + "/results.png", data);
-
-        
-
-
+        // hide each stimulus and return them to the main plane at z = 0
         foreach (Stimulus s in stimulusField)
         {
             s.hide();
@@ -245,7 +261,7 @@ public class Main : MonoBehaviour
         }
     }
 
-
+    /*
     IEnumerator fieldTest1()
     {
         foreach (Stimulus s in stimulusField)
@@ -256,6 +272,7 @@ public class Main : MonoBehaviour
         startButton.SetActive(true);
         exitButton.SetActive(true);
     }
+    */
 
    
     /*
