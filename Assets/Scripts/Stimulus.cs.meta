@@ -1,0 +1,13 @@
+fileFormatVersion: 2
+guid: 560f4db7620072e489e9921f229133b0
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - stimulusPreFab: {fileID: 4305215908120510876, guid: ec0fd9b2285c3184489134955974746a,
+      type: 3}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

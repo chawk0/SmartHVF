@@ -3,7 +3,10 @@ guid: 14a535a67feb83c4293edc1b05c51faa
 MonoImporter:
   externalObjects: {}
   serializedVersion: 2
-  defaultReferences: []
+  defaultReferences:
+  - stimulusPrefab: {instanceID: 0}
+  - exitButton: {instanceID: 0}
+  - startButton: {instanceID: 0}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 
