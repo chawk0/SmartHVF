@@ -28,7 +28,6 @@ public class Main : MonoBehaviour
 
     void Start()
     {
-        Debug.Log(System.DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss"));
         Debug.Log("Starting app...");
         Debug.Log("Screen size: " + Screen.width + ", " + Screen.height);
 
@@ -115,13 +114,47 @@ public class Main : MonoBehaviour
         // build the list of stimulus objects
         stimulusField = new List<Stimulus>();
 
-        for (float y = 1.5f; y >= -1.5f; y -= 1.0f)
+        // generates the approximate stimulus pattern from an actual HVF test.
+        float stepSize = 0.75f;
+        int[] rowLengths = { 4, 6, 8, 8, 8, 8, 6, 4 };
+        Vector3 pos = Vector3.zero;
+
+        for (int y = 0; y < rowLengths.Length; ++y)
         {
-            for (float x = -1.5f; x <= 1.5f; x += 1.0f)
+            for (int x = 0; x < rowLengths[y]; ++x)
             {
-                stimulusField.Add(new Stimulus(stimulusPrefab, new Vector3(x, y, 0)));
+                pos.x = -(float)(rowLengths[y] - 1) / 2.0f * stepSize + (float)x * stepSize;
+                pos.y = -(float)(rowLengths.Length - 1) / 2.0f * stepSize + (float)y * stepSize;
+                pos.z = 0;
+
+                /*
+                // bias the locations closer to the axes
+                if (pos.x < 0)
+                    pos.x += (0.125f * stepSize);
+                else if (pos.x > 0)
+                    pos.x -= (0.125f * stepSize);
+
+                if (pos.y < 0)
+                    pos.y += (0.125f * stepSize);
+                else if (pos.y > 0)
+                    pos.y -= (0.125f * stepSize);
+                    */
+                stimulusField.Add(new Stimulus(stimulusPrefab, pos));
+            }
+
+            // generates the 2 extra stimuli at the left/right edge
+            if (y == 3 || y == 4)
+            {
+                pos.x += stepSize;
+                stimulusField.Add(new Stimulus(stimulusPrefab, pos));
             }
         }
+
+        Camera cam = GameObject.Find("Main Camera").GetComponent<Camera>();
+
+        Debug.Log("stimulus[0] is at world pos: " + stimulusField[0].position + " and screen pos: " + cam.WorldToScreenPoint(stimulusField[0].position));
+        Debug.Log("stimulus field has " + stimulusField.Count + " elements");
+
     }
 
     void resetStimulusField()
@@ -176,12 +209,14 @@ public class Main : MonoBehaviour
                     // decrease by 10%
                     s.dimBy(0.1f);
                     // brief delay before next round
-                    yield return new WaitForSeconds(1.0f);
+                    yield return new WaitForSeconds(0.4f);
+                    
                 }
                 else if (tot.timeout)
                 {
                     // we've hit the brightness threshold for this stimulus, so end this loop and start on next stimulus
                     inRampDown = false;
+                    
                 }
                 else if (abortTest)
                 {
@@ -248,7 +283,27 @@ public class Main : MonoBehaviour
         temp.Apply();
 
         // this plugin takes a texture2d. encodes to a .png image, and saves it to the gallery
-        NativeGallery.SaveImageToGallery(temp, "SmartHVF", "results.png");
+        NativeGallery.SaveImageToGallery(temp, "SmartHVF", "results-" + System.DateTime.Now.ToString("yyyyMMdd-HH-mm-ss") + ".png");
+
+
+
+
+        Camera cam = GameObject.Find("Main Camera").GetComponent<Camera>();
+        int blockSize = (int)(0.75f / 10 * 1080);
+        Color[] cols = new Color[blockSize * blockSize];
+
+        foreach (Stimulus s in stimulusField)
+        {
+            Vector3 screenPos = cam.WorldToScreenPoint(s.position);
+            
+            for (int i = 0; i < cols.Length; ++i)
+                cols[i] = new Color(1.0f - s.brightness, 1.0f - s.brightness, 1.0f - s.brightness);
+
+            temp.SetPixels((int)screenPos.x - (blockSize - 1) / 2, (int)screenPos.y - (blockSize - 1) / 2, blockSize, blockSize, cols, 0);
+        }
+
+        temp.Apply();
+        NativeGallery.SaveImageToGallery(temp, "SmartHVF", "test.png");
 
         // get rid of temp texture
         Destroy(temp);
