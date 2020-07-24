@@ -11,6 +11,7 @@ public class Main : MonoBehaviour
     public GameObject exitButton;
     public GameObject startButton;
     public GameObject testSaveButton;
+    public GameObject crosshair;
     public RenderTexture resultsTexture;
 
     // list of Stimulus objects making up the field test
@@ -26,15 +27,21 @@ public class Main : MonoBehaviour
     // simple timer to trigger on user timeout
     private TimeoutTimer tot;
 
+    // used in generating the field and grayscale map
+    private float camOrthoSize;
+    private float stepSize;
+
+    private AndroidJavaObject testJavaObject;
+
     void Start()
     {
         Debug.Log("Starting app...");
         Debug.Log("Screen size: " + Screen.width + ", " + Screen.height);
 
         GameObject camera = GameObject.Find("Main Camera");
-        float os = camera.GetComponent<Camera>().orthographicSize;
-        Debug.Log("Camera ortho size: " + os);
-        Debug.Log("World size: " + ((float)Screen.width / Screen.height * os * 2.0f) + ", " + (os * 2.0f));
+        camOrthoSize = camera.GetComponent<Camera>().orthographicSize;
+        Debug.Log("Camera ortho size: " + camOrthoSize);
+        Debug.Log("World size: " + ((float)Screen.width / Screen.height * camOrthoSize * 2.0f) + ", " + (camOrthoSize * 2.0f));
 
         // setup button handlers
         Button b = exitButton.GetComponent<Button>();
@@ -42,6 +49,9 @@ public class Main : MonoBehaviour
         
         b = startButton.GetComponent<Button>();
         b.onClick.AddListener(startButtonClick);
+
+        // move the crosshairs behind the camera initially
+        //crosshair.GetComponent<Transform>().SetPositionAndRotation(new Vector3(0, 0, -10.0f), Quaternion.identity);
 
         // set initial states
         inTest = false;
@@ -54,6 +64,12 @@ public class Main : MonoBehaviour
 
         // create the stimulus field objects
         buildStimulusField();
+
+        AndroidJavaClass player = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
+        AndroidJavaObject context = player.GetStatic<AndroidJavaObject>("currentActivity");
+
+        testJavaObject = new AndroidJavaObject("com.example.testlibrary.TestClass");
+        testJavaObject.Call("ToggleBluetooth", new object[] { context });
     }
 
     // Update is called once per frame
@@ -99,6 +115,8 @@ public class Main : MonoBehaviour
         exitButton.SetActive(false);
         testSaveButton.SetActive(false);
 
+        crosshair.GetComponent<Transform>().SetPositionAndRotation(Vector3.zero, Quaternion.identity);
+
         StartCoroutine(fieldTest2());
         //StartCoroutine(spawnTestStimulus());
         //StartCoroutine(spawnTestStimulus3());
@@ -115,8 +133,10 @@ public class Main : MonoBehaviour
         stimulusField = new List<Stimulus>();
 
         // generates the approximate stimulus pattern from an actual HVF test.
-        float stepSize = 0.75f;
         int[] rowLengths = { 4, 6, 8, 8, 8, 8, 6, 4 };
+
+        float fieldScale = 1.0f;
+        stepSize = camOrthoSize * 2.0f / (rowLengths.Length + 1) * fieldScale;
         Vector3 pos = Vector3.zero;
 
         for (int y = 0; y < rowLengths.Length; ++y)
@@ -150,10 +170,12 @@ public class Main : MonoBehaviour
             }
         }
 
+        /*
         Camera cam = GameObject.Find("Main Camera").GetComponent<Camera>();
 
         Debug.Log("stimulus[0] is at world pos: " + stimulusField[0].position + " and screen pos: " + cam.WorldToScreenPoint(stimulusField[0].position));
         Debug.Log("stimulus field has " + stimulusField.Count + " elements");
+        */
 
     }
 
@@ -207,7 +229,9 @@ public class Main : MonoBehaviour
                 if (stimulusSeen)
                 {
                     // decrease by 10%
-                    s.dimBy(0.1f);
+                    //s.dimBy(0.1f);
+                    s.brightness = 0.0f;
+                    inRampDown = false;
                     // brief delay before next round
                     yield return new WaitForSeconds(0.4f);
                     
@@ -236,10 +260,12 @@ public class Main : MonoBehaviour
         }
 
         // at this point, the stimulus objects contain the brighness values at the threshold of visibility
+        /*
         foreach(Stimulus s in stimulusField)
         {
             Debug.Log("stimulus at (" + s.position.x + ", " + s.position.y + ") visible down to brightness " + s.brightness);
         }
+        */
 
         
         Debug.Log("Test complete");
@@ -251,6 +277,8 @@ public class Main : MonoBehaviour
         startButton.SetActive(true);
         exitButton.SetActive(true);
         testSaveButton.SetActive(true);
+
+        crosshair.GetComponent<Transform>().SetPositionAndRotation(new Vector3(0, 0, -5.0f), Quaternion.identity);
     }
 
     public void testSave()
@@ -263,7 +291,7 @@ public class Main : MonoBehaviour
             s.position.z = -15.0f;
         }
 
-        // coroutin finishes the job
+        // coroutine finishes the job
         StartCoroutine(CoTestSave());
     }
 
@@ -289,7 +317,7 @@ public class Main : MonoBehaviour
 
 
         Camera cam = GameObject.Find("Main Camera").GetComponent<Camera>();
-        int blockSize = (int)(0.75f / 10 * 1080);
+        int blockSize = (int)(stepSize / (camOrthoSize * 2.0f) * 1080);
         Color[] cols = new Color[blockSize * blockSize];
 
         foreach (Stimulus s in stimulusField)
