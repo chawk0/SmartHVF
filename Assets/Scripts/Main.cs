@@ -31,6 +31,7 @@ public class Main : MonoBehaviour
     private float camOrthoSize;
     private float stepSize;
 
+    // java objects to interface with the SmartHVF-Input library for BT commss
     private AndroidJavaObject unityContext;
     private AndroidJavaObject btLib;
 
@@ -66,12 +67,13 @@ public class Main : MonoBehaviour
         // create the stimulus field objects
         buildStimulusField();
 
+        // setup the Android Java objects that let us communicate to the SmartHVF-Input project and
+        // receive bluetooth comms
         AndroidJavaClass player = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
         unityContext = player.GetStatic<AndroidJavaObject>("currentActivity");
 
         btLib = new AndroidJavaObject("com.example.testlibrary.TestClass");
         btLib.Call("InitBluetooth", new object[] { unityContext });
-        
     }
 
     // Update is called once per frame
@@ -105,6 +107,7 @@ public class Main : MonoBehaviour
             }
         }
 
+        // if there was data received over BT, count that too
         if (btLib.Call<bool>("GetInput") == true)
             stimulusSeen = true;
 
@@ -219,7 +222,7 @@ public class Main : MonoBehaviour
                 // show the stimulus at its current brightness
                 s.show();
 
-                // clear the input status in the bluetooth module
+                // clear the input status in the Java BT library
                 btLib.Call("ClearInput");
 
                 // wait for 200ms
@@ -237,9 +240,9 @@ public class Main : MonoBehaviour
                 if (stimulusSeen)
                 {
                     // decrease by 10%
-                    //s.dimBy(0.1f);
-                    s.brightness = 0.0f;
-                    inRampDown = false;
+                    s.dimBy(0.1f);
+                    //s.brightness = 0.0f;
+                    //inRampDown = false;
                     // brief delay before next round
                     yield return new WaitForSeconds(0.4f);
                     
@@ -323,6 +326,7 @@ public class Main : MonoBehaviour
 
 
 
+        // experimental grayscale map generation
 
         Camera cam = GameObject.Find("Main Camera").GetComponent<Camera>();
         int blockSize = (int)(stepSize / (camOrthoSize * 2.0f) * 1080);
