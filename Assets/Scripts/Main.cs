@@ -31,7 +31,8 @@ public class Main : MonoBehaviour
     private float camOrthoSize;
     private float stepSize;
 
-    private AndroidJavaObject testJavaObject;
+    private AndroidJavaObject unityContext;
+    private AndroidJavaObject btLib;
 
     void Start()
     {
@@ -66,10 +67,11 @@ public class Main : MonoBehaviour
         buildStimulusField();
 
         AndroidJavaClass player = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
-        AndroidJavaObject context = player.GetStatic<AndroidJavaObject>("currentActivity");
+        unityContext = player.GetStatic<AndroidJavaObject>("currentActivity");
 
-        testJavaObject = new AndroidJavaObject("com.example.testlibrary.TestClass");
-        testJavaObject.Call("ToggleBluetooth", new object[] { context });
+        btLib = new AndroidJavaObject("com.example.testlibrary.TestClass");
+        btLib.Call("InitBluetooth", new object[] { unityContext });
+        
     }
 
     // Update is called once per frame
@@ -102,6 +104,9 @@ public class Main : MonoBehaviour
                 }
             }
         }
+
+        if (btLib.Call<bool>("GetInput") == true)
+            stimulusSeen = true;
 
         // keep the timeout timer updated if in testing
         if (inTest)
@@ -213,6 +218,9 @@ public class Main : MonoBehaviour
 
                 // show the stimulus at its current brightness
                 s.show();
+
+                // clear the input status in the bluetooth module
+                btLib.Call("ClearInput");
 
                 // wait for 200ms
                 yield return new WaitForSeconds(0.2f);
