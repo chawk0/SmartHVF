@@ -14,8 +14,11 @@ public class Main : MonoBehaviour
     public GameObject crosshair;
     public RenderTexture resultsTexture;
 
+    public Camera mainCamera;
+
     // list of Stimulus objects making up the field test
     private List<Stimulus> stimulusField;
+    private Vector3 stimulusFieldBoundsMin, stimulusFieldBoundsMax;
 
     // state variables for testing and input
     private bool inTest, abortTest;
@@ -40,20 +43,11 @@ public class Main : MonoBehaviour
         Debug.Log("Starting app...");
         Debug.Log("Screen size: " + Screen.width + ", " + Screen.height);
 
-        GameObject camera = GameObject.Find("Main Camera");
-        camOrthoSize = camera.GetComponent<Camera>().orthographicSize;
+        mainCamera = GameObject.Find("Main Camera").GetComponent<Camera>();
+        camOrthoSize = mainCamera.orthographicSize;
+
         Debug.Log("Camera ortho size: " + camOrthoSize);
         Debug.Log("World size: " + ((float)Screen.width / Screen.height * camOrthoSize * 2.0f) + ", " + (camOrthoSize * 2.0f));
-
-        // setup button handlers
-        Button b = exitButton.GetComponent<Button>();
-        b.onClick.AddListener(exitButtonClick);
-        
-        b = startButton.GetComponent<Button>();
-        b.onClick.AddListener(startButtonClick);
-
-        // move the crosshairs behind the camera initially
-        //crosshair.GetComponent<Transform>().SetPositionAndRotation(new Vector3(0, 0, -10.0f), Quaternion.identity);
 
         // set initial states
         inTest = false;
@@ -108,15 +102,15 @@ public class Main : MonoBehaviour
         }
 
         // if there was data received over BT, count that too
-        if (btLib.Call<bool>("GetInput") == true)
-            stimulusSeen = true;
+        //if (btLib.Call<bool>("GetInput") == true)
+        //    stimulusSeen = true;
 
         // keep the timeout timer updated if in testing
         if (inTest)
             tot.update();
     }
 
-    void startButtonClick()
+    public void startButtonClick()
     {
         // hide the buttons before beginning test
         startButton.SetActive(false);
@@ -130,7 +124,7 @@ public class Main : MonoBehaviour
         //StartCoroutine(spawnTestStimulus3());
     }
 
-    void exitButtonClick()
+    public void exitButtonClick()
     {
         Application.Quit();
     }
@@ -177,14 +171,29 @@ public class Main : MonoBehaviour
                 stimulusField.Add(new Stimulus(stimulusPrefab, pos));
             }
         }
+        
+        // find the extents of the stimulus field in world space
+        stimulusFieldBoundsMin = new Vector3(float.MaxValue, float.MaxValue, 0);
+        stimulusFieldBoundsMax = new Vector3(float.MinValue, float.MinValue, 0);
 
-        /*
-        Camera cam = GameObject.Find("Main Camera").GetComponent<Camera>();
+        foreach (Stimulus s in stimulusField)
+        {
+            if (s.position.x < stimulusFieldBoundsMin.x)
+                stimulusFieldBoundsMin.x = s.position.x;
+            if (s.position.y < stimulusFieldBoundsMin.y)
+                stimulusFieldBoundsMin.y = s.position.y;
 
-        Debug.Log("stimulus[0] is at world pos: " + stimulusField[0].position + " and screen pos: " + cam.WorldToScreenPoint(stimulusField[0].position));
-        Debug.Log("stimulus field has " + stimulusField.Count + " elements");
-        */
+            if (s.position.x > stimulusFieldBoundsMax.x)
+                stimulusFieldBoundsMax.x = s.position.x;
+            if (s.position.y > stimulusFieldBoundsMax.y)
+                stimulusFieldBoundsMax.y = s.position.y;
+        }
 
+        // expand the bounds by half the step size in each direction
+        stimulusFieldBoundsMin.x -= (stepSize / 2.0f);
+        stimulusFieldBoundsMin.y -= (stepSize / 2.0f);
+        stimulusFieldBoundsMax.x += (stepSize / 2.0f);
+        stimulusFieldBoundsMax.y += (stepSize / 2.0f);
     }
 
     void resetStimulusField()
@@ -295,7 +304,7 @@ public class Main : MonoBehaviour
     public void testSave()
     {
         // make all stimuli visible and move them behind main camera to z = -15.0f.
-        // this is in between the black quad "backdrop" (z = -10) and the results camera (z = -20)
+        // this is in between the "backdrop" quad (z = -10) and the results camera (z = -20)
         foreach(Stimulus s in stimulusField)
         {
             s.show();
@@ -304,6 +313,11 @@ public class Main : MonoBehaviour
 
         // coroutine finishes the job
         StartCoroutine(CoTestSave());
+    }
+
+    private void generateEyeMap()
+    {
+        //Texture2D eyeMap = 
     }
 
     private IEnumerator CoTestSave()
@@ -327,14 +341,12 @@ public class Main : MonoBehaviour
 
 
         // experimental grayscale map generation
-
-        Camera cam = GameObject.Find("Main Camera").GetComponent<Camera>();
-        int blockSize = (int)(stepSize / (camOrthoSize * 2.0f) * 1080);
+        int blockSize = (int)(stepSize / (camOrthoSize * 2.0f) * Screen.height);
         Color[] cols = new Color[blockSize * blockSize];
 
         foreach (Stimulus s in stimulusField)
         {
-            Vector3 screenPos = cam.WorldToScreenPoint(s.position);
+            Vector3 screenPos = mainCamera.WorldToScreenPoint(s.position);
             
             for (int i = 0; i < cols.Length; ++i)
                 cols[i] = new Color(1.0f - s.brightness, 1.0f - s.brightness, 1.0f - s.brightness);
@@ -354,6 +366,8 @@ public class Main : MonoBehaviour
             s.hide();
             s.position.z = 0;
         }
+
+        generateEyeMap();
     }
 
     /*
