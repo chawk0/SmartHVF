@@ -1,0 +1,6 @@
+patient name(?), age
+datetime
+stimulus size
+false pos errors
+false neg errors
+test duration

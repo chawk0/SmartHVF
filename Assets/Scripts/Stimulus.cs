@@ -23,7 +23,7 @@ public class Stimulus
         this.material = this.instance.GetComponent<Renderer>().material;
         // set to black initially, though the starting brightness is 100%
         this.material.SetColor("_Color", Color.black);
-        this.brightness = 1.0f;
+        this.brightness = Random.Range(0.0f, 1.0f);
         // move into place
         this.instance.transform.SetPositionAndRotation(this.position, Quaternion.identity);
     }

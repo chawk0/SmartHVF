@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
@@ -313,11 +314,86 @@ public class Main : MonoBehaviour
 
         // coroutine finishes the job
         StartCoroutine(CoTestSave());
+        //generateEyeMap();
+        //sampleStimulusField(Vector3.zero);
     }
 
-    private void generateEyeMap()
+    private float sampleStimulusField(Vector3 pos)
     {
-        //Texture2D eyeMap = 
+        // construct a list of tuples, storing a reference to a stimulus and the distance from pos
+        List<Tuple<Stimulus, float>> distanceList = new List<Tuple<Stimulus, float>>();
+
+        foreach (Stimulus s in stimulusField)
+        {
+            float d = Vector3.Distance(pos, s.position);
+            distanceList.Add(new Tuple<Stimulus, float>(s, d));
+        }
+
+        // ascending sort
+        distanceList.Sort((x, y) => x.Item2.CompareTo(y.Item2));
+
+        // sample the nearest 4
+        float sample = 0;
+        for (int i = 0; i < 4; ++i)
+            sample += ((1.0f - distanceList[i].Item1.brightness) / 4.0f);
+
+        return sample;
+    }
+
+    private Texture2D generateEyeMap()
+    {
+        Texture2D eyeMap;// = new Texture2D(2, 2);
+
+        string filePath = "eyemap_left";
+        Color[] pixelData;
+
+        eyeMap = Resources.Load<Texture2D>(filePath);
+        if (eyeMap != null)
+        {
+            Debug.Log("texture size: " + eyeMap.width + " w x " + eyeMap.height + " h");
+            pixelData = eyeMap.GetPixels();
+
+            // the step size to move for each sample, in world coords
+            float mapStepX = (float)(stimulusFieldBoundsMax.x - stimulusFieldBoundsMin.x) / eyeMap.width;
+            float mapStepY = (float)(stimulusFieldBoundsMax.y - stimulusFieldBoundsMin.y) / eyeMap.height;
+
+            // start at the top left corner of the field bounds (biased to the center)
+            Vector3 p = new Vector3();
+            p.x = stimulusFieldBoundsMin.x + mapStepX / 2.0f;
+            p.y = stimulusFieldBoundsMax.y - mapStepY / 2.0f;
+            p.z = -15.0f;
+
+            // iterate through the eyemap, using the alpha channel to tell where to sample (a == 1)
+            for (int y = 0; y < eyeMap.height; ++y)
+            {
+                // at the start of each row, reset x coord to the left
+                p.x = stimulusFieldBoundsMin.x + mapStepX / 2.0f;
+
+                for (int x = 0; x < eyeMap.width; ++x)
+                {
+                    int index = x + y * eyeMap.width;
+                    // only sample where alpha == 1
+                    if (pixelData[index].a == 1.0f)
+                        pixelData[index].r = pixelData[index].g = pixelData[index].b = sampleStimulusField(p);
+
+                    // move x coord over
+                    p.x += mapStepX;
+                }
+
+                // y coord descends each row
+                p.y -= mapStepY;
+            }
+
+            eyeMap.SetPixels(pixelData);
+            eyeMap.Apply();
+
+            return eyeMap;
+        }
+        else
+        {
+            Debug.Log("failed to load eyemap_left :(");
+            return null;
+        }
     }
 
     private IEnumerator CoTestSave()
@@ -335,8 +411,9 @@ public class Main : MonoBehaviour
         temp.ReadPixels(new Rect(0, 0, resultsTexture.width, resultsTexture.height), 0, 0);
         temp.Apply();
 
+        string nowString = System.DateTime.Now.ToString("yyyyMMdd-HH-mm-ss");
         // this plugin takes a texture2d. encodes to a .png image, and saves it to the gallery
-        NativeGallery.SaveImageToGallery(temp, "SmartHVF", "results-" + System.DateTime.Now.ToString("yyyyMMdd-HH-mm-ss") + ".png");
+        NativeGallery.SaveImageToGallery(temp, "SmartHVF", nowString + "-field.png");
 
 
 
@@ -355,10 +432,14 @@ public class Main : MonoBehaviour
         }
 
         temp.Apply();
-        NativeGallery.SaveImageToGallery(temp, "SmartHVF", "test.png");
+        NativeGallery.SaveImageToGallery(temp, "SmartHVF", nowString + "-map1.png");
 
-        // get rid of temp texture
+        Texture2D map2 = generateEyeMap();
+        NativeGallery.SaveImageToGallery(map2, "SmartHVF", nowString + "-map2.png");
+
+        // get rid of textures
         Destroy(temp);
+        Destroy(map2);
 
         // hide each stimulus and return them to the main plane at z = 0
         foreach (Stimulus s in stimulusField)
@@ -366,8 +447,6 @@ public class Main : MonoBehaviour
             s.hide();
             s.position.z = 0;
         }
-
-        generateEyeMap();
     }
 
     /*
