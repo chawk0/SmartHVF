@@ -19,6 +19,7 @@ public class Main : MonoBehaviour
 
     // list of Stimulus objects making up the field test
     private List<Stimulus> stimulusField;
+    private List<Stimulus> shuffledField;
     private Vector3 stimulusFieldBoundsMin, stimulusFieldBoundsMax;
 
     // state variables for testing and input
@@ -68,7 +69,7 @@ public class Main : MonoBehaviour
         unityContext = player.GetStatic<AndroidJavaObject>("currentActivity");
 
         btLib = new AndroidJavaObject("com.example.testlibrary.TestClass");
-        btLib.Call("InitBluetooth", new object[] { unityContext });
+        //btLib.Call("InitBluetooth", new object[] { unityContext });
     }
 
     // Update is called once per frame
@@ -195,6 +196,21 @@ public class Main : MonoBehaviour
         stimulusFieldBoundsMin.y -= (stepSize / 2.0f);
         stimulusFieldBoundsMax.x += (stepSize / 2.0f);
         stimulusFieldBoundsMax.y += (stepSize / 2.0f);
+
+        // build a second list that is a shuffled version of the first
+        shuffledField = new List<Stimulus>();
+        List<Stimulus> temp = new List<Stimulus>(stimulusField);
+        System.Random rng = new System.Random();
+
+        while (temp.Count > 0)
+        {
+            int index = rng.Next(0, temp.Count);
+            shuffledField.Add(stimulusField[index]);
+            temp.RemoveAt(index);
+        }
+
+        Debug.Log("temp count: " + temp.Count);
+        Debug.Log("shuffled field count: " + shuffledField.Count);
     }
 
     void resetStimulusField()
@@ -220,7 +236,7 @@ public class Main : MonoBehaviour
         inTest = true;
 
         // iterate through stimuli
-        foreach (Stimulus s in stimulusField)
+        foreach (Stimulus s in shuffledField)
         {
             // the ramp down is the steady decrease in brightness for a given stimulus until it's no longer visible
             inRampDown = true;
@@ -242,7 +258,7 @@ public class Main : MonoBehaviour
                 s.hide();
 
                 // start the timeout timer for 3 seconds
-                tot.start(3.0f);
+                tot.start(1.0f);
 
                 // wait until the user indicates stimulus was seen, the timer times out, or the user aborts the test
                 yield return new WaitUntil(() => (stimulusSeen || tot.timeout || abortTest));
@@ -329,15 +345,32 @@ public class Main : MonoBehaviour
             distanceList.Add(new Tuple<Stimulus, float>(s, d));
         }
 
-        // ascending sort
+        // ascending sort based on distance (item2 of the tuple)
         distanceList.Sort((x, y) => x.Item2.CompareTo(y.Item2));
 
+        /*
         // sample the nearest 4
         float sample = 0;
         for (int i = 0; i < 4; ++i)
             sample += ((1.0f - distanceList[i].Item1.brightness) / 4.0f);
+            */
 
-        return sample;
+        // sample only stimuli within a certain radius based on stepsize
+        float sample = 0;
+        int sampleCount = 0;
+        foreach (var t in distanceList)
+        {
+            if (t.Item2 <= (stepSize * 0.7778f))
+            {
+                sample += (1.0f - t.Item1.brightness);
+                sampleCount++;
+            }
+        }
+
+        if (sampleCount > 0)
+            return sample / sampleCount;
+        else
+            return 1.0f - distanceList[0].Item1.brightness;
     }
 
     private Texture2D generateEyeMap()
@@ -357,10 +390,10 @@ public class Main : MonoBehaviour
             float mapStepX = (float)(stimulusFieldBoundsMax.x - stimulusFieldBoundsMin.x) / eyeMap.width;
             float mapStepY = (float)(stimulusFieldBoundsMax.y - stimulusFieldBoundsMin.y) / eyeMap.height;
 
-            // start at the top left corner of the field bounds (biased to the center)
+            // start at the bottom left corner of the field bounds (biased to the center of the sample)
             Vector3 p = new Vector3();
             p.x = stimulusFieldBoundsMin.x + mapStepX / 2.0f;
-            p.y = stimulusFieldBoundsMax.y - mapStepY / 2.0f;
+            p.y = stimulusFieldBoundsMin.y + mapStepY / 2.0f;
             p.z = -15.0f;
 
             // iterate through the eyemap, using the alpha channel to tell where to sample (a == 1)
@@ -380,8 +413,8 @@ public class Main : MonoBehaviour
                     p.x += mapStepX;
                 }
 
-                // y coord descends each row
-                p.y -= mapStepY;
+                // move y coord up
+                p.y += mapStepY;
             }
 
             eyeMap.SetPixels(pixelData);
@@ -417,7 +450,7 @@ public class Main : MonoBehaviour
 
 
 
-        // experimental grayscale map generation
+        // simple blocky eyemap generation
         int blockSize = (int)(stepSize / (camOrthoSize * 2.0f) * Screen.height);
         Color[] cols = new Color[blockSize * blockSize];
 
@@ -434,6 +467,7 @@ public class Main : MonoBehaviour
         temp.Apply();
         NativeGallery.SaveImageToGallery(temp, "SmartHVF", nowString + "-map1.png");
 
+        // v2 of eyemap sampling
         Texture2D map2 = generateEyeMap();
         NativeGallery.SaveImageToGallery(map2, "SmartHVF", nowString + "-map2.png");
 
