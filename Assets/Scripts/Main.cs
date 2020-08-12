@@ -9,11 +9,11 @@ public class Main : MonoBehaviour
 {
     // linked in the inspector
     public GameObject stimulusPrefab;
-    public GameObject exitButton;
-    public GameObject startButton;
-    public GameObject testSaveButton;
     public GameObject crosshair;
     public RenderTexture resultsTexture;
+
+    public GameObject mainMenuPanel;
+    public GameObject testConfigPanel;
 
     public Camera mainCamera;
 
@@ -57,6 +57,12 @@ public class Main : MonoBehaviour
         stimulusSeen = false;
         lastTouchStartTime = 0;
 
+        //mainMenuPanel = GameObject.Find("MainMenuPanel");
+        //testConfigPanel = GameObject.Find("TestConfigPanel");
+
+        mainMenuPanel.SetActive(true);
+        testConfigPanel.SetActive(false);
+
         // create the timeout timer
         tot = new TimeoutTimer();
 
@@ -65,11 +71,13 @@ public class Main : MonoBehaviour
 
         // setup the Android Java objects that let us communicate to the SmartHVF-Input project and
         // receive bluetooth comms
+        /*
         AndroidJavaClass player = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
         unityContext = player.GetStatic<AndroidJavaObject>("currentActivity");
 
         btLib = new AndroidJavaObject("com.example.testlibrary.TestClass");
         //btLib.Call("InitBluetooth", new object[] { unityContext });
+        */
     }
 
     // Update is called once per frame
@@ -112,6 +120,109 @@ public class Main : MonoBehaviour
             tot.update();
     }
 
+    public void NewTestButton_Click()
+    {
+        mainMenuPanel.SetActive(false);
+        testConfigPanel.SetActive(true);
+
+
+        /*
+        string filePath = Application.persistentDataPath + "/test.txt";
+        string[] lines;
+
+        if (File.Exists(filePath))
+        {
+            Debug.Log("sample file found!  " + filePath);
+            Debug.Log("contents:");
+
+            lines = File.ReadAllLines(filePath);
+
+            foreach (string s in lines)
+                Debug.Log(s);
+        }
+        else
+        {
+            string[] sampleFile = { "test file", "from unity" };
+            File.WriteAllLines(filePath, sampleFile);
+            Debug.Log("writing sample file " + filePath + " ...");
+        }
+        */
+    }
+
+    void testFunc(TestInfo ti)
+    {
+        
+    }
+
+    public void BeginTestButton_Click()
+    {
+        /*
+        public TestType type;
+        public int stimulusSize;
+        public DateTime dateTime;
+        public int duration;
+        public int patientAge;*/
+
+        // build a test info object to hand off to the testing routine
+        TestInfo newTestInfo = new TestInfo();
+
+        // check the left/right toggles
+        Toggle leftEye = GameObject.Find("LeftEyeToggle").GetComponent<Toggle>();
+        if (leftEye.isOn)
+            newTestInfo.type = TestType.LeftEye;
+        else
+            newTestInfo.type = TestType.RightEye;
+
+        
+        newTestInfo.stimulusSize = GameObject.Find("StimulusSizeDropdown").GetComponent<Dropdown>().value;
+        setStimulusFieldSize(newTestInfo.stimulusSize);
+        newTestInfo.dateTime = DateTime.Now;
+        newTestInfo.duration = 0;
+        newTestInfo.patientAge = 0;
+
+        testConfigPanel.SetActive(false);
+
+        Debug.Log("starting coroutine...");
+        // make the crosshair visible
+        crosshair.GetComponent<Transform>().SetPositionAndRotation(Vector3.zero, Quaternion.identity);
+        // start the test routine
+        StartCoroutine(fieldTest2(newTestInfo));
+    }
+
+    public void CancelNewTestButton_Click()
+    {
+        testConfigPanel.SetActive(false);
+        mainMenuPanel.SetActive(true);
+    }
+
+    public void ExitButton_Click()
+    {
+        Application.Quit();
+    }
+
+    public void PanelTest()
+    {
+        GameObject input = GameObject.Find("InputField");
+        GameObject label = GameObject.Find("TextLabel");
+
+        if (input != null && label != null)
+        {
+            Text inputText = input.GetComponentInChildren<Text>();
+            Text labelText = label.GetComponent<Text>();
+
+            if (inputText != null && labelText != null)
+            {
+                Debug.Log("inputText.text: " + inputText.text);
+                Debug.Log("textText.text: " + labelText.text);
+                labelText.text = inputText.text;
+                Debug.Log("... textText.text: " + labelText.text);
+            }
+            else
+                Debug.Log("something's null!  inputText: " + (inputText == null) + ", textText: " + (labelText == null));
+        }
+    }
+
+    /*
     public void startButtonClick()
     {
         // hide the buttons before beginning test
@@ -125,13 +236,15 @@ public class Main : MonoBehaviour
         //StartCoroutine(spawnTestStimulus());
         //StartCoroutine(spawnTestStimulus3());
     }
+    
 
     public void exitButtonClick()
     {
         Application.Quit();
     }
+    */
 
-    void buildStimulusField()
+        void buildStimulusField()
     {
         // build the list of stimulus objects
         stimulusField = new List<Stimulus>();
@@ -209,9 +322,18 @@ public class Main : MonoBehaviour
             temp.RemoveAt(index);
         }
 
-        Debug.Log("temp count: " + temp.Count);
+        //Debug.Log("temp count: " + temp.Count);
         Debug.Log("shuffled field count: " + shuffledField.Count);
     }
+
+    void setStimulusFieldSize(int size)
+    {
+        float newScale = 0.025f * (float)Math.Pow(2.0, (double)size);
+
+        foreach (Stimulus s in stimulusField)
+            s.setScale(newScale);
+    }
+            
 
     void resetStimulusField()
     {
@@ -220,7 +342,7 @@ public class Main : MonoBehaviour
             s.brightness = 1.0f;
     }
 
-    IEnumerator fieldTest2()
+    IEnumerator fieldTest2(TestInfo testInfo)
     {
         bool inRampDown;
 
@@ -228,6 +350,7 @@ public class Main : MonoBehaviour
         resetStimulusField();
 
         Debug.Log("Starting test...");
+        Debug.Log("Test info: " + testInfo.type + ", stimulus size: " + testInfo.stimulusSize + ", datetime: " + testInfo.dateTime.ToString("yyyyMMdd-HH-mm-ss"));
 
         // wait for 1 second before beginning test
         yield return new WaitForSeconds(1);
@@ -249,7 +372,7 @@ public class Main : MonoBehaviour
                 s.show();
 
                 // clear the input status in the Java BT library
-                btLib.Call("ClearInput");
+                //btLib.Call("ClearInput");
 
                 // wait for 200ms
                 yield return new WaitForSeconds(0.2f);
@@ -268,7 +391,7 @@ public class Main : MonoBehaviour
                     // decrease by 10%
                     s.dimBy(0.1f);
                     //s.brightness = 0.0f;
-                    //inRampDown = false;
+                    inRampDown = false;
                     // brief delay before next round
                     yield return new WaitForSeconds(0.4f);
                     
@@ -287,10 +410,9 @@ public class Main : MonoBehaviour
                     inTest = false;
                     abortTest = false;
 
-                    startButton.SetActive(true);
-                    exitButton.SetActive(true);
-                    testSaveButton.SetActive(true);
 
+                    crosshair.GetComponent<Transform>().SetPositionAndRotation(new Vector3(0, 0, -5.0f), Quaternion.identity);
+                    testConfigPanel.SetActive(true);
                     yield break;
                 }
             }
@@ -311,11 +433,13 @@ public class Main : MonoBehaviour
         inTest = false;
         abortTest = false;
 
-        startButton.SetActive(true);
-        exitButton.SetActive(true);
-        testSaveButton.SetActive(true);
+        //startButton.SetActive(true);
+        //exitButton.SetActive(true);
+        //testSaveButton.SetActive(true);
 
         crosshair.GetComponent<Transform>().SetPositionAndRotation(new Vector3(0, 0, -5.0f), Quaternion.identity);
+
+        mainMenuPanel.SetActive(true);
     }
 
     public void testSave()

@@ -54,4 +54,9 @@ public class Stimulus
     {
         Object.Destroy(instance);
     }
+
+    public void setScale(float newScale)
+    {
+        this.instance.transform.localScale = new Vector3(newScale, newScale, 1.0f);
+    }
 }
