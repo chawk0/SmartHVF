@@ -15,6 +15,7 @@ public class TestInfo
     public DateTime dateTime;
     public int duration;
     public int patientAge;
+    public string patientName;
 
     public TestInfo()
     { }

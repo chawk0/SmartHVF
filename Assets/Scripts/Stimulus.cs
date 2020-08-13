@@ -18,12 +18,13 @@ public class Stimulus
         // save starting position
         this.position = startPosition;
         // create instance from prefab; start behind camera initially so it's not visible
-        this.instance = (GameObject)GameObject.Instantiate(prefab, new Vector3(0, 0, -100), Quaternion.identity);
+        this.instance = (GameObject)GameObject.Instantiate(prefab, startPosition, Quaternion.identity);
         // grab a reference to the material for setting the color
         this.material = this.instance.GetComponent<Renderer>().material;
         // set to black initially, though the starting brightness is 100%
         this.material.SetColor("_Color", Color.black);
-        this.brightness = Random.Range(0.0f, 1.0f);
+        //this.brightness = Random.Range(0.0f, 1.0f);
+        this.brightness = 1.0f;
         // move into place
         this.instance.transform.SetPositionAndRotation(this.position, Quaternion.identity);
     }
@@ -58,5 +59,11 @@ public class Stimulus
     public void setScale(float newScale)
     {
         this.instance.transform.localScale = new Vector3(newScale, newScale, 1.0f);
+    }
+
+    public void setZ(float newZ)
+    {
+        this.instance.transform.SetPositionAndRotation(new Vector3(this.position.x, this.position.y, newZ), Quaternion.identity);
+        this.position.z = newZ;
     }
 }

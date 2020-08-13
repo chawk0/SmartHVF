@@ -14,8 +14,11 @@ public class Main : MonoBehaviour
 
     public GameObject mainMenuPanel;
     public GameObject testConfigPanel;
+    public GameObject patientDataPanel;
+    public GameObject testResultsPanel;
 
     public Camera mainCamera;
+    public GameObject testResultsPreviewBackdrop;
 
     // list of Stimulus objects making up the field test
     private List<Stimulus> stimulusField;
@@ -36,6 +39,10 @@ public class Main : MonoBehaviour
     private float camOrthoSize;
     private float stepSize;
 
+    // holds the most recent test result's generated eyemap
+    private Texture2D testResultEyeMap;
+    public TestInfo lastTestInfo;
+
     // java objects to interface with the SmartHVF-Input library for BT commss
     private AndroidJavaObject unityContext;
     private AndroidJavaObject btLib;
@@ -45,7 +52,6 @@ public class Main : MonoBehaviour
         Debug.Log("Starting app...");
         Debug.Log("Screen size: " + Screen.width + ", " + Screen.height);
 
-        mainCamera = GameObject.Find("Main Camera").GetComponent<Camera>();
         camOrthoSize = mainCamera.orthographicSize;
 
         Debug.Log("Camera ortho size: " + camOrthoSize);
@@ -62,6 +68,8 @@ public class Main : MonoBehaviour
 
         mainMenuPanel.SetActive(true);
         testConfigPanel.SetActive(false);
+        patientDataPanel.SetActive(false);
+        testResultsPanel.SetActive(false);
 
         // create the timeout timer
         tot = new TimeoutTimer();
@@ -83,6 +91,9 @@ public class Main : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if (Input.GetMouseButtonDown(0))
+            stimulusSeen = true;
+            
         // detect any touching of the screen
         if (Input.touchCount > 0)
         {
@@ -149,20 +160,8 @@ public class Main : MonoBehaviour
         */
     }
 
-    void testFunc(TestInfo ti)
-    {
-        
-    }
-
     public void BeginTestButton_Click()
     {
-        /*
-        public TestType type;
-        public int stimulusSize;
-        public DateTime dateTime;
-        public int duration;
-        public int patientAge;*/
-
         // build a test info object to hand off to the testing routine
         TestInfo newTestInfo = new TestInfo();
 
@@ -177,8 +176,9 @@ public class Main : MonoBehaviour
         newTestInfo.stimulusSize = GameObject.Find("StimulusSizeDropdown").GetComponent<Dropdown>().value;
         setStimulusFieldSize(newTestInfo.stimulusSize);
         newTestInfo.dateTime = DateTime.Now;
-        newTestInfo.duration = 0;
-        newTestInfo.patientAge = 0;
+        newTestInfo.duration = (int)Time.time;
+        newTestInfo.patientAge = 25;
+        newTestInfo.patientName = "Joe Bob";
 
         testConfigPanel.SetActive(false);
 
@@ -198,6 +198,18 @@ public class Main : MonoBehaviour
     public void ExitButton_Click()
     {
         Application.Quit();
+    }
+
+    public void SaveTestResultsButton_Click()
+    {
+        testSave();
+    }
+
+    public void BackButton_Click()
+    {
+        testResultsPreviewBackdrop.SetActive(false);
+        testResultsPanel.SetActive(false);
+        mainMenuPanel.SetActive(true);
     }
 
     public void PanelTest()
@@ -222,29 +234,8 @@ public class Main : MonoBehaviour
         }
     }
 
-    /*
-    public void startButtonClick()
-    {
-        // hide the buttons before beginning test
-        startButton.SetActive(false);
-        exitButton.SetActive(false);
-        testSaveButton.SetActive(false);
 
-        crosshair.GetComponent<Transform>().SetPositionAndRotation(Vector3.zero, Quaternion.identity);
-
-        StartCoroutine(fieldTest2());
-        //StartCoroutine(spawnTestStimulus());
-        //StartCoroutine(spawnTestStimulus3());
-    }
-    
-
-    public void exitButtonClick()
-    {
-        Application.Quit();
-    }
-    */
-
-        void buildStimulusField()
+    void buildStimulusField()
     {
         // build the list of stimulus objects
         stimulusField = new List<Stimulus>();
@@ -262,7 +253,7 @@ public class Main : MonoBehaviour
             {
                 pos.x = -(float)(rowLengths[y] - 1) / 2.0f * stepSize + (float)x * stepSize;
                 pos.y = -(float)(rowLengths.Length - 1) / 2.0f * stepSize + (float)y * stepSize;
-                pos.z = 0;
+                pos.z = -15.0f;
 
                 /*
                 // bias the locations closer to the axes
@@ -328,6 +319,7 @@ public class Main : MonoBehaviour
 
     void setStimulusFieldSize(int size)
     {
+        // size 0 to 4 maps to Goldmann sizes I to IV.  each size is 4x the area as the previous, so x/y scale is doubled
         float newScale = 0.025f * (float)Math.Pow(2.0, (double)size);
 
         foreach (Stimulus s in stimulusField)
@@ -335,19 +327,32 @@ public class Main : MonoBehaviour
     }
             
 
-    void resetStimulusField()
+    void stageStimulusField()
     {
-        // reset all stimuli to full brightness
+        // stage the stimuli at z = 0 so they're in view of the camera and ready for the test
         foreach (Stimulus s in stimulusField)
-            s.brightness = 1.0f;
+        {
+            s.hide();
+            s.setZ(0);
+            //s.brightness = 1.0f;
+        }
+    }
+
+    void hideStimulusField()
+    {
+        foreach (Stimulus s in stimulusField)
+        {
+            s.show();
+            s.setZ(-15.0f);
+        }
     }
 
     IEnumerator fieldTest2(TestInfo testInfo)
     {
         bool inRampDown;
 
-        // reset all stimuli to full brightness
-        resetStimulusField();
+        // reset all stimuli to full brightness, start as hidden, and move to Z = 0
+        stageStimulusField();
 
         Debug.Log("Starting test...");
         Debug.Log("Test info: " + testInfo.type + ", stimulus size: " + testInfo.stimulusSize + ", datetime: " + testInfo.dateTime.ToString("yyyyMMdd-HH-mm-ss"));
@@ -359,8 +364,11 @@ public class Main : MonoBehaviour
         inTest = true;
 
         // iterate through stimuli
-        foreach (Stimulus s in shuffledField)
+        //foreach (Stimulus s in shuffledField)
+        Stimulus s;
+        for (int i = 0; i < 5; ++i)
         {
+            s = shuffledField[i];
             // the ramp down is the steady decrease in brightness for a given stimulus until it's no longer visible
             inRampDown = true;
             while (inRampDown)
@@ -389,7 +397,7 @@ public class Main : MonoBehaviour
                 if (stimulusSeen)
                 {
                     // decrease by 10%
-                    s.dimBy(0.1f);
+                    //s.dimBy(0.1f);
                     //s.brightness = 0.0f;
                     inRampDown = false;
                     // brief delay before next round
@@ -426,31 +434,44 @@ public class Main : MonoBehaviour
         }
         */
 
-        
+        testInfo.duration = (int)Time.time - testInfo.duration;
+        lastTestInfo = testInfo;
         Debug.Log("Test complete");
 
         stimulusSeen = false;
         inTest = false;
         abortTest = false;
 
-        //startButton.SetActive(true);
-        //exitButton.SetActive(true);
-        //testSaveButton.SetActive(true);
-
+        // move crosshair behind the camera
         crosshair.GetComponent<Transform>().SetPositionAndRotation(new Vector3(0, 0, -5.0f), Quaternion.identity);
 
-        mainMenuPanel.SetActive(true);
+        Debug.Log("Hiding stimulus field...");
+        hideStimulusField();
+
+        Debug.Log("Generating eyemap...");
+        testResultEyeMap = generateEyeMap();
+        testResultEyeMap.filterMode = FilterMode.Point;
+
+        Debug.Log("Moving in preview backdrop...");
+        testResultsPreviewBackdrop.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
+
+        Debug.Log("Updating texture...");
+        Material m = testResultsPreviewBackdrop.GetComponent<Renderer>().material;
+        if (m != null)
+            m.SetTexture("_MainTex", (Texture)testResultEyeMap);
+        else
+            Debug.Log("failed to acquire test results preview backdrop material");
+
+        Debug.Log("Switching to test results panel...");
+        // transition to test results panel
+        testResultsPanel.SetActive(true);        
     }
 
     public void testSave()
     {
         // make all stimuli visible and move them behind main camera to z = -15.0f.
         // this is in between the "backdrop" quad (z = -10) and the results camera (z = -20)
-        foreach(Stimulus s in stimulusField)
-        {
-            s.show();
-            s.position.z = -15.0f;
-        }
+        hideStimulusField();
 
         // coroutine finishes the job
         StartCoroutine(CoTestSave());
@@ -560,6 +581,11 @@ public class Main : MonoBehaviour
 
         Debug.Log("Saving results to SmartHVF gallery...");
 
+        Debug.Log("position of crosshair: " + crosshair.transform.position);
+        Debug.Log("position of results backdrop: " + GameObject.Find("Results Backdrop").transform.position);
+        crosshair.SetActive(false);
+        testResultsPreviewBackdrop.SetActive(false);
+        yield return new WaitForEndOfFrame();
         // set the currently active render texture to the one used by the results camera
         RenderTexture.active = resultsTexture;
         // create a temporary texture2d to copy this data into
@@ -567,24 +593,31 @@ public class Main : MonoBehaviour
 
         temp.ReadPixels(new Rect(0, 0, resultsTexture.width, resultsTexture.height), 0, 0);
         temp.Apply();
+        RenderTexture.active = null;
+        crosshair.SetActive(true);
+        testResultsPreviewBackdrop.SetActive(true);
 
         string nowString = System.DateTime.Now.ToString("yyyyMMdd-HH-mm-ss");
-        // this plugin takes a texture2d. encodes to a .png image, and saves it to the gallery
+        // this plugin takes a texture2D, encodes to a .png image, and saves it to the gallery
         NativeGallery.SaveImageToGallery(temp, "SmartHVF", nowString + "-field.png");
+        
 
 
-
-        // simple blocky eyemap generation
+        // simple blocky eyemap generation.
+        // blockSize is computed as the ratio between stepSize and the total vertical extent in world space, but mapped to screen/pixel space
         int blockSize = (int)(stepSize / (camOrthoSize * 2.0f) * Screen.height);
         Color[] cols = new Color[blockSize * blockSize];
 
         foreach (Stimulus s in stimulusField)
         {
+            // map the world coords to screen space
             Vector3 screenPos = mainCamera.WorldToScreenPoint(s.position);
             
+            // really need some kind of memset equivalent here
             for (int i = 0; i < cols.Length; ++i)
                 cols[i] = new Color(1.0f - s.brightness, 1.0f - s.brightness, 1.0f - s.brightness);
 
+            // draw a single colored block centered at the stimulus location
             temp.SetPixels((int)screenPos.x - (blockSize - 1) / 2, (int)screenPos.y - (blockSize - 1) / 2, blockSize, blockSize, cols, 0);
         }
 
@@ -599,158 +632,7 @@ public class Main : MonoBehaviour
         Destroy(temp);
         Destroy(map2);
 
-        // hide each stimulus and return them to the main plane at z = 0
-        foreach (Stimulus s in stimulusField)
-        {
-            s.hide();
-            s.position.z = 0;
-        }
+        hideStimulusField();
+        
     }
-
-    /*
-    IEnumerator fieldTest1()
-    {
-        foreach (Stimulus s in stimulusField)
-            s.show();
-
-        yield return new WaitForSeconds(5);
-
-        startButton.SetActive(true);
-        exitButton.SetActive(true);
-    }
-    */
-
-   
-    /*
-    IEnumerator spawnTestStimulus3()
-    {
-        // spawn a test stimulus behind the camera
-        GameObject s = (GameObject)Instantiate(stimulusPrefab, new Vector3(0, 0, -100), Quaternion.identity);
-        // initial brightness of stimulus is 1.0 (full)
-        float b = 1.0f;
-
-        Debug.Log("Starting test...");
-
-        // wait for 1 second before beginning test
-        yield return new WaitForSeconds(1);
-
-        // translate the stimulus into view and grab its material reference to set the color
-        s.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
-        Material m = s.GetComponent<Renderer>().material;
-
-
-        // begin test
-        inTest = true;
-        while (inTest)
-        {
-            // reset each loop
-            stimulusSeen = false;
-
-            // set the brightness of the stimulus
-            m.SetColor("_Color", new Color(b, b, b));
-
-            // wait for 200m while stimulus is visible
-            yield return new WaitForSeconds(0.2f);
-            // then turn it black
-            m.SetColor("_Color", Color.black);
-
-            // start the timeout timer for 5 seconds
-            tot.start(5.0f);
-            // wait until timeout or user input indicates stimulus was seen
-            yield return new WaitUntil(() => (stimulusSeen || tot.timeout));
-
-            // if user saw the stimulus, decrease brightness and repeat test
-            if (stimulusSeen)
-            {
-                b -= 0.1f;
-                if (b < 0)
-                    b = 0;
-
-                Debug.Log("Input received, decreasing brightness by 10% (current: " + b + ")");
-
-                // brief delay before next round
-                yield return new WaitForSeconds(1.0f);
-            }
-            else
-            {
-                Debug.Log("User input timeout...");
-                inTest = false;
-            }
-                
-        }
-
-        Debug.Log("Test complete");
-
-        Destroy(s);
-
-        stimulusSeen = false;
-        inTest = false;
-        startButton.SetActive(true);
-        exitButton.SetActive(true);
-    }
-    */
-    
-
-    /*
-    IEnumerator spawnTestStimulus2()
-    {
-        GameObject s = (GameObject)Instantiate(stimulusPrefab, new Vector3(0, 0, -100), Quaternion.identity);
-
-        yield return new WaitForSeconds(1);
-
-        inTest = true;
-
-        s.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
-        Material m = s.GetComponent<Renderer>().material;
-
-        while (!stimulusSeen)
-        {
-            m.SetColor("_Color", Color.white);
-
-            yield return new WaitForSeconds(0.2f);
-            
-            m.SetColor("_Color", Color.black);
-
-            Debug.Log("Stimulus shown... waiting...");
-
-            yield return new WaitForSeconds(5);
-        }
-
-        Debug.Log("Test complete");
-
-        Destroy(s);
-
-        stimulusSeen = false;
-        inTest = false;
-        startButton.SetActive(true);
-    }
-    */
-
-    /*
-    IEnumerator spawnTestStimulus()
-    {
-        GameObject[] s = new GameObject[10];
-
-        Vector3 spawnPos = new Vector3(-1.5f, -4.5f, 0);
-
-        for (int i = 0; i < s.Length; i++)
-        {
-            float c = (float)i / 9.0f;
-
-            s[i] = (GameObject)Instantiate(stimulusPrefab, spawnPos, Quaternion.identity);
-            s[i].GetComponent<Renderer>().material.SetColor("_Color", new Color(c, c, c));
-
-            spawnPos.y += 1.0f;
-        }
-
-        yield return new WaitForSeconds(5);
-
-        foreach (GameObject o in s)
-            Destroy(o);
-
-        yield return new WaitForSeconds(1);
-
-        startButton.SetActive(true);
-    }
-    */
 }
