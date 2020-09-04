@@ -49,7 +49,7 @@ public class Main : MonoBehaviour
 
     void Start()
     {
-        Debug.Log("Starting app...");
+        Debug.Log("Starting app ...");
         Debug.Log("Screen size: " + Screen.width + ", " + Screen.height);
 
         camOrthoSize = mainCamera.orthographicSize;
@@ -70,6 +70,8 @@ public class Main : MonoBehaviour
         testConfigPanel.SetActive(false);
         patientDataPanel.SetActive(false);
         testResultsPanel.SetActive(false);
+
+        
 
         // create the timeout timer
         tot = new TimeoutTimer();
@@ -240,7 +242,7 @@ public class Main : MonoBehaviour
         // build the list of stimulus objects
         stimulusField = new List<Stimulus>();
 
-        // generates the approximate stimulus pattern from an actual HVF test.
+        // generates the approximate stimulus pattern from an actual HVF 24-2 test.
         int[] rowLengths = { 4, 6, 8, 8, 8, 8, 6, 4 };
 
         float fieldScale = 1.0f;

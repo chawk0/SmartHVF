@@ -2,6 +2,8 @@ Z = 0		GUI, stimulus field during testing
 
 Z = -1		main camera
 
+Z = -5		crosshair quad
+
 Z = -10		results backdrop for rendertexture
 
 Z = -15		stimulus field when not testing / rendering results
