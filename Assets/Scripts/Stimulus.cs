@@ -2,6 +2,11 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+// this object represents one stimulus point in the stimulus field, and it's
+// represented as a quad in world space, textured with a white circle.
+// the _Color shader parameter is varied to change "brightness" and the scale
+// is manipulated to adjust the size, corresponding to Goldmann sizes I-V (needs to be calibrated)
+
 public class Stimulus
 {
     public Vector3 position;

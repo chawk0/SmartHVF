@@ -1,0 +1,24 @@
+test info:
+
+	eye to test
+
+	color settings, test type  (24-2, etc)
+
+	stimulus algorithm settings (delay, initial step size, reversals, etc)
+
+	patient associated to the test
+
+	stimulus field values
+
+	method to generate eyemap?
+
+	
+
+patient data:
+
+	name, age
+
+	list of tests
+
+	threshold info?
+

@@ -4,6 +4,10 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
+
+// this script is attached to the TestResultsPanel GUI element and is used to update the
+// relevant GUI elements with test/patient info once the panel becomes active.
+// the OnEnable method fetches the last test info from the global stored in Main.cs
 public class TestResultsUpdater : MonoBehaviour
 {
     private string formatDuration(int duration)
@@ -33,8 +37,8 @@ public class TestResultsUpdater : MonoBehaviour
             Text eyeLabel = GameObject.Find("EyeLabel").GetComponent<Text>();
             Text testDurationLabel = GameObject.Find("TestDurationLabel").GetComponent<Text>();
 
-            patientNameLabel.text = "Patient Name: " + ti.patientName;
-            patientAgeLabel.text = "Patient Age: " + ti.patientAge.ToString();
+            patientNameLabel.text = "Patient Name: " + ti.patient.name;
+            patientAgeLabel.text = "Patient Age: " + ti.patient.age;
             eyeLabel.text = "Eye: " + formatTestType(ti.type);
             testDurationLabel.text = "Test Duration: " + formatDuration(ti.duration);
         }

@@ -133,14 +133,14 @@ public class Main : MonoBehaviour
             tot.update();
     }
 
-    public void NewTestButton_Click()
+    public void TestSaveButton_Click()
     {
-        mainMenuPanel.SetActive(false);
-        testConfigPanel.SetActive(true);
+        //mainMenuPanel.SetActive(false);
+        //testConfigPanel.SetActive(true);
 
 
-        /*
-        string filePath = Application.persistentDataPath + "/test.txt";
+        
+        string filePath = Application.persistentDataPath + "/zlayers.txt";
         string[] lines;
 
         if (File.Exists(filePath))
@@ -159,13 +159,17 @@ public class Main : MonoBehaviour
             File.WriteAllLines(filePath, sampleFile);
             Debug.Log("writing sample file " + filePath + " ...");
         }
-        */
+        
     }
 
     public void BeginTestButton_Click()
     {
-        // build a test info object to hand off to the testing routine
+        // build a test info object to hand off to the testing routine.
         TestInfo newTestInfo = new TestInfo();
+        Patient patient = new Patient();
+
+        patient.age = 42;
+        patient.name = "Joe Bob";
 
         // check the left/right toggles
         Toggle leftEye = GameObject.Find("LeftEyeToggle").GetComponent<Toggle>();
@@ -179,8 +183,9 @@ public class Main : MonoBehaviour
         setStimulusFieldSize(newTestInfo.stimulusSize);
         newTestInfo.dateTime = DateTime.Now;
         newTestInfo.duration = (int)Time.time;
-        newTestInfo.patientAge = 25;
-        newTestInfo.patientName = "Joe Bob";
+        newTestInfo.patient = patient;
+        //newTestInfo.patientAge = 25;
+        //newTestInfo.patientName = "Joe Bob";
 
         testConfigPanel.SetActive(false);
 
