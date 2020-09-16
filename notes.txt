@@ -22,3 +22,14 @@ patient data:
 
 	threshold info?
 
+
+
+move all relevant test objects/data into the TestInfo class
+
+figure out how to serialize and save all of that to storage
+
+do the same with the patient class
+
+expand the patient GUI panels
+
+load up one testinfo/patient at a time in Main and run through test

@@ -332,7 +332,7 @@ public class Main : MonoBehaviour
         foreach (Stimulus s in stimulusField)
             s.setScale(newScale);
     }
-            
+      
 
     void stageStimulusField()
     {
