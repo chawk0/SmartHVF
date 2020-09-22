@@ -20,11 +20,6 @@ public class Main : MonoBehaviour
     public Camera mainCamera;
     public GameObject testResultsPreviewBackdrop;
 
-    // list of Stimulus objects making up the field test
-    private List<Stimulus> stimulusField;
-    private List<Stimulus> shuffledField;
-    private Vector3 stimulusFieldBoundsMin, stimulusFieldBoundsMax;
-
     // state variables for testing and input
     private bool inTest, abortTest;
     private bool stimulusSeen;
@@ -40,8 +35,8 @@ public class Main : MonoBehaviour
     private float stepSize;
 
     // holds the most recent test result's generated eyemap
-    private Texture2D testResultEyeMap;
-    public TestInfo lastTestInfo;
+    //private Texture2D testResultEyeMap;
+    public TestInfo testInfo;
 
     // java objects to interface with the SmartHVF-Input library for BT commss
     private AndroidJavaObject unityContext;
@@ -63,21 +58,16 @@ public class Main : MonoBehaviour
         stimulusSeen = false;
         lastTouchStartTime = 0;
 
-        //mainMenuPanel = GameObject.Find("MainMenuPanel");
-        //testConfigPanel = GameObject.Find("TestConfigPanel");
-
         mainMenuPanel.SetActive(true);
         testConfigPanel.SetActive(false);
         patientDataPanel.SetActive(false);
         testResultsPanel.SetActive(false);
 
-        
-
         // create the timeout timer
         tot = new TimeoutTimer();
 
         // create the stimulus field objects
-        buildStimulusField();
+        //buildStimulusField();
 
         // setup the Android Java objects that let us communicate to the SmartHVF-Input project and
         // receive bluetooth comms
@@ -165,35 +155,24 @@ public class Main : MonoBehaviour
     public void BeginTestButton_Click()
     {
         // build a test info object to hand off to the testing routine.
-        TestInfo newTestInfo = new TestInfo();
         Patient patient = new Patient();
 
         patient.age = 42;
         patient.name = "Joe Bob";
 
-        // check the left/right toggles
         Toggle leftEye = GameObject.Find("LeftEyeToggle").GetComponent<Toggle>();
-        if (leftEye.isOn)
-            newTestInfo.type = TestType.LeftEye;
-        else
-            newTestInfo.type = TestType.RightEye;
+        TestType tt = leftEye.isOn ? TestType.LeftEye : TestType.RightEye;
+        int stimulusSize = GameObject.Find("StimulusSizeDropdown").GetComponent<Dropdown>().value;
 
+        testInfo = new TestInfo(tt, patient, camOrthoSize, stimulusSize);
         
-        newTestInfo.stimulusSize = GameObject.Find("StimulusSizeDropdown").GetComponent<Dropdown>().value;
-        setStimulusFieldSize(newTestInfo.stimulusSize);
-        newTestInfo.dateTime = DateTime.Now;
-        newTestInfo.duration = (int)Time.time;
-        newTestInfo.patient = patient;
-        //newTestInfo.patientAge = 25;
-        //newTestInfo.patientName = "Joe Bob";
-
         testConfigPanel.SetActive(false);
 
         Debug.Log("starting coroutine...");
         // make the crosshair visible
         crosshair.GetComponent<Transform>().SetPositionAndRotation(Vector3.zero, Quaternion.identity);
         // start the test routine
-        StartCoroutine(fieldTest2(newTestInfo));
+        StartCoroutine(fieldTest2(testInfo));
     }
 
     public void CancelNewTestButton_Click()
@@ -242,124 +221,15 @@ public class Main : MonoBehaviour
     }
 
 
-    void buildStimulusField()
-    {
-        // build the list of stimulus objects
-        stimulusField = new List<Stimulus>();
+    
 
-        // generates the approximate stimulus pattern from an actual HVF 24-2 test.
-        int[] rowLengths = { 4, 6, 8, 8, 8, 8, 6, 4 };
-
-        float fieldScale = 1.0f;
-        stepSize = camOrthoSize * 2.0f / (rowLengths.Length + 1) * fieldScale;
-        Vector3 pos = Vector3.zero;
-
-        for (int y = 0; y < rowLengths.Length; ++y)
-        {
-            for (int x = 0; x < rowLengths[y]; ++x)
-            {
-                pos.x = -(float)(rowLengths[y] - 1) / 2.0f * stepSize + (float)x * stepSize;
-                pos.y = -(float)(rowLengths.Length - 1) / 2.0f * stepSize + (float)y * stepSize;
-                pos.z = -15.0f;
-
-                /*
-                // bias the locations closer to the axes
-                if (pos.x < 0)
-                    pos.x += (0.125f * stepSize);
-                else if (pos.x > 0)
-                    pos.x -= (0.125f * stepSize);
-
-                if (pos.y < 0)
-                    pos.y += (0.125f * stepSize);
-                else if (pos.y > 0)
-                    pos.y -= (0.125f * stepSize);
-                    */
-                stimulusField.Add(new Stimulus(stimulusPrefab, pos));
-            }
-
-            // generates the 2 extra stimuli at the left/right edge
-            if (y == 3 || y == 4)
-            {
-                pos.x += stepSize;
-                stimulusField.Add(new Stimulus(stimulusPrefab, pos));
-            }
-        }
-        
-        // find the extents of the stimulus field in world space
-        stimulusFieldBoundsMin = new Vector3(float.MaxValue, float.MaxValue, 0);
-        stimulusFieldBoundsMax = new Vector3(float.MinValue, float.MinValue, 0);
-
-        foreach (Stimulus s in stimulusField)
-        {
-            if (s.position.x < stimulusFieldBoundsMin.x)
-                stimulusFieldBoundsMin.x = s.position.x;
-            if (s.position.y < stimulusFieldBoundsMin.y)
-                stimulusFieldBoundsMin.y = s.position.y;
-
-            if (s.position.x > stimulusFieldBoundsMax.x)
-                stimulusFieldBoundsMax.x = s.position.x;
-            if (s.position.y > stimulusFieldBoundsMax.y)
-                stimulusFieldBoundsMax.y = s.position.y;
-        }
-
-        // expand the bounds by half the step size in each direction
-        stimulusFieldBoundsMin.x -= (stepSize / 2.0f);
-        stimulusFieldBoundsMin.y -= (stepSize / 2.0f);
-        stimulusFieldBoundsMax.x += (stepSize / 2.0f);
-        stimulusFieldBoundsMax.y += (stepSize / 2.0f);
-
-        // build a second list that is a shuffled version of the first
-        shuffledField = new List<Stimulus>();
-        List<Stimulus> temp = new List<Stimulus>(stimulusField);
-        System.Random rng = new System.Random();
-
-        while (temp.Count > 0)
-        {
-            int index = rng.Next(0, temp.Count);
-            shuffledField.Add(stimulusField[index]);
-            temp.RemoveAt(index);
-        }
-
-        //Debug.Log("temp count: " + temp.Count);
-        Debug.Log("shuffled field count: " + shuffledField.Count);
-    }
-
-    void setStimulusFieldSize(int size)
-    {
-        // size 0 to 4 maps to Goldmann sizes I to IV.  each size is 4x the area as the previous, so x/y scale is doubled
-        float newScale = 0.025f * (float)Math.Pow(2.0, (double)size);
-
-        foreach (Stimulus s in stimulusField)
-            s.setScale(newScale);
-    }
-      
-
-    void stageStimulusField()
-    {
-        // stage the stimuli at z = 0 so they're in view of the camera and ready for the test
-        foreach (Stimulus s in stimulusField)
-        {
-            s.hide();
-            s.setZ(0);
-            //s.brightness = 1.0f;
-        }
-    }
-
-    void hideStimulusField()
-    {
-        foreach (Stimulus s in stimulusField)
-        {
-            s.show();
-            s.setZ(-15.0f);
-        }
-    }
 
     IEnumerator fieldTest2(TestInfo testInfo)
     {
         bool inRampDown;
 
         // reset all stimuli to full brightness, start as hidden, and move to Z = 0
-        stageStimulusField();
+        
 
         Debug.Log("Starting test...");
         Debug.Log("Test info: " + testInfo.type + ", stimulus size: " + testInfo.stimulusSize + ", datetime: " + testInfo.dateTime.ToString("yyyyMMdd-HH-mm-ss"));
@@ -478,7 +348,7 @@ public class Main : MonoBehaviour
     {
         // make all stimuli visible and move them behind main camera to z = -15.0f.
         // this is in between the "backdrop" quad (z = -10) and the results camera (z = -20)
-        hideStimulusField();
+        //hideStimulusField();
 
         // coroutine finishes the job
         StartCoroutine(CoTestSave());
@@ -486,100 +356,9 @@ public class Main : MonoBehaviour
         //sampleStimulusField(Vector3.zero);
     }
 
-    private float sampleStimulusField(Vector3 pos)
-    {
-        // construct a list of tuples, storing a reference to a stimulus and the distance from pos
-        List<Tuple<Stimulus, float>> distanceList = new List<Tuple<Stimulus, float>>();
+    
 
-        foreach (Stimulus s in stimulusField)
-        {
-            float d = Vector3.Distance(pos, s.position);
-            distanceList.Add(new Tuple<Stimulus, float>(s, d));
-        }
-
-        // ascending sort based on distance (item2 of the tuple)
-        distanceList.Sort((x, y) => x.Item2.CompareTo(y.Item2));
-
-        /*
-        // sample the nearest 4
-        float sample = 0;
-        for (int i = 0; i < 4; ++i)
-            sample += ((1.0f - distanceList[i].Item1.brightness) / 4.0f);
-            */
-
-        // sample only stimuli within a certain radius based on stepsize
-        float sample = 0;
-        int sampleCount = 0;
-        foreach (var t in distanceList)
-        {
-            if (t.Item2 <= (stepSize * 0.7778f))
-            {
-                sample += (1.0f - t.Item1.brightness);
-                sampleCount++;
-            }
-        }
-
-        if (sampleCount > 0)
-            return sample / sampleCount;
-        else
-            return 1.0f - distanceList[0].Item1.brightness;
-    }
-
-    private Texture2D generateEyeMap()
-    {
-        Texture2D eyeMap;// = new Texture2D(2, 2);
-
-        string filePath = "eyemap_left";
-        Color[] pixelData;
-
-        eyeMap = Resources.Load<Texture2D>(filePath);
-        if (eyeMap != null)
-        {
-            Debug.Log("texture size: " + eyeMap.width + " w x " + eyeMap.height + " h");
-            pixelData = eyeMap.GetPixels();
-
-            // the step size to move for each sample, in world coords
-            float mapStepX = (float)(stimulusFieldBoundsMax.x - stimulusFieldBoundsMin.x) / eyeMap.width;
-            float mapStepY = (float)(stimulusFieldBoundsMax.y - stimulusFieldBoundsMin.y) / eyeMap.height;
-
-            // start at the bottom left corner of the field bounds (biased to the center of the sample)
-            Vector3 p = new Vector3();
-            p.x = stimulusFieldBoundsMin.x + mapStepX / 2.0f;
-            p.y = stimulusFieldBoundsMin.y + mapStepY / 2.0f;
-            p.z = -15.0f;
-
-            // iterate through the eyemap, using the alpha channel to tell where to sample (a == 1)
-            for (int y = 0; y < eyeMap.height; ++y)
-            {
-                // at the start of each row, reset x coord to the left
-                p.x = stimulusFieldBoundsMin.x + mapStepX / 2.0f;
-
-                for (int x = 0; x < eyeMap.width; ++x)
-                {
-                    int index = x + y * eyeMap.width;
-                    // only sample where alpha == 1
-                    if (pixelData[index].a == 1.0f)
-                        pixelData[index].r = pixelData[index].g = pixelData[index].b = sampleStimulusField(p);
-
-                    // move x coord over
-                    p.x += mapStepX;
-                }
-
-                // move y coord up
-                p.y += mapStepY;
-            }
-
-            eyeMap.SetPixels(pixelData);
-            eyeMap.Apply();
-
-            return eyeMap;
-        }
-        else
-        {
-            Debug.Log("failed to load eyemap_left :(");
-            return null;
-        }
-    }
+    
 
     private IEnumerator CoTestSave()
     {
@@ -609,7 +388,7 @@ public class Main : MonoBehaviour
         NativeGallery.SaveImageToGallery(temp, "SmartHVF", nowString + "-field.png");
         
 
-
+        /*
         // simple blocky eyemap generation.
         // blockSize is computed as the ratio between stepSize and the total vertical extent in world space, but mapped to screen/pixel space
         int blockSize = (int)(stepSize / (camOrthoSize * 2.0f) * Screen.height);
@@ -630,16 +409,17 @@ public class Main : MonoBehaviour
 
         temp.Apply();
         NativeGallery.SaveImageToGallery(temp, "SmartHVF", nowString + "-map1.png");
+        */
 
         // v2 of eyemap sampling
-        Texture2D map2 = generateEyeMap();
+        Texture2D map2 = testInfo.generateEyeMap();
         NativeGallery.SaveImageToGallery(map2, "SmartHVF", nowString + "-map2.png");
 
         // get rid of textures
         Destroy(temp);
         Destroy(map2);
 
-        hideStimulusField();
+        //hideStimulusField();
         
     }
 }

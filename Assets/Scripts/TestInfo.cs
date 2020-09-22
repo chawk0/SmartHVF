@@ -27,11 +27,13 @@ public class TestInfo
     private Vector3 _stimulusFieldBoundsMin, _stimulusFieldBoundsMax;
 
 
-    public TestInfo(TestType type, Patient patient, float camOrthoSize)
+    public TestInfo(TestType type, Patient patient, float camOrthoSize, int stimulusSize = 2)
     {
         _type = type;
         _patient = patient;
         _camOrthoSize = camOrthoSize;
+        _stimulusSize = stimulusSize;
+        setStimulusFieldSize(_stimulusSize);
 
         buildStimulusField();
     }
@@ -112,5 +114,136 @@ public class TestInfo
 
         //Debug.Log("temp count: " + temp.Count);
         //Debug.Log("shuffled field count: " + shuffledField.Count);
+    }
+
+
+    private void setStimulusFieldSize(int size)
+    {
+        // size 0 to 4 maps to Goldmann sizes I to IV.  each size is 4x the area as the previous, so x/y scale is doubled
+        float newScale = 0.025f * (float)Math.Pow(2.0, (double)size);
+
+        foreach (Stimulus s in _stimulusField)
+            s.setScale(newScale);
+    }
+
+
+    private void stageStimulusField()
+    {
+        // stage the stimuli at z = 0 so they're in view of the camera and ready for the test
+        foreach (Stimulus s in _stimulusField)
+        {
+            s.hide();
+            s.setZ(0);
+            //s.brightness = 1.0f;
+        }
+    }
+
+    private void hideStimulusField()
+    {
+        foreach (Stimulus s in _stimulusField)
+        {
+            s.hide();
+            s.setZ(-15.0f);
+        }
+    }
+
+    public IEnumerator testProcedure()
+    {
+        //
+    }
+
+    private float sampleStimulusField(Vector3 pos)
+    {
+        // construct a list of tuples, storing a reference to a stimulus and the distance from pos
+        List<Tuple<Stimulus, float>> distanceList = new List<Tuple<Stimulus, float>>();
+
+        foreach (Stimulus s in _stimulusField)
+        {
+            float d = Vector3.Distance(pos, s.position);
+            distanceList.Add(new Tuple<Stimulus, float>(s, d));
+        }
+
+        // ascending sort based on distance (item2 of the tuple)
+        distanceList.Sort((x, y) => x.Item2.CompareTo(y.Item2));
+
+        /*
+        // sample the nearest 4
+        float sample = 0;
+        for (int i = 0; i < 4; ++i)
+            sample += ((1.0f - distanceList[i].Item1.brightness) / 4.0f);
+            */
+
+        // sample only stimuli within a certain radius based on stepsize
+        float sample = 0;
+        int sampleCount = 0;
+        foreach (var t in distanceList)
+        {
+            if (t.Item2 <= (_stepSize * 0.7778f))
+            {
+                sample += (1.0f - t.Item1.brightness);
+                sampleCount++;
+            }
+        }
+
+        if (sampleCount > 0)
+            return sample / sampleCount;
+        else
+            return 1.0f - distanceList[0].Item1.brightness;
+    }
+
+    public Texture2D generateEyeMap()
+    {
+        Texture2D eyeMap;// = new Texture2D(2, 2);
+
+        string filePath = "eyemap_left";
+        Color[] pixelData;
+
+        eyeMap = Resources.Load<Texture2D>(filePath);
+        if (eyeMap != null)
+        {
+            Debug.Log("texture size: " + eyeMap.width + " w x " + eyeMap.height + " h");
+            pixelData = eyeMap.GetPixels();
+
+            // the step size to move for each sample, in world coords
+            float mapStepX = (float)(_stimulusFieldBoundsMax.x - _stimulusFieldBoundsMin.x) / eyeMap.width;
+            float mapStepY = (float)(_stimulusFieldBoundsMax.y - _stimulusFieldBoundsMin.y) / eyeMap.height;
+
+            // start at the bottom left corner of the field bounds (biased to the center of the sample)
+            Vector3 p = new Vector3();
+            p.x = _stimulusFieldBoundsMin.x + mapStepX / 2.0f;
+            p.y = _stimulusFieldBoundsMin.y + mapStepY / 2.0f;
+            p.z = -15.0f;
+
+            // iterate through the eyemap, using the alpha channel to tell where to sample (a == 1)
+            for (int y = 0; y < eyeMap.height; ++y)
+            {
+                // at the start of each row, reset x coord to the left
+                p.x = _stimulusFieldBoundsMin.x + mapStepX / 2.0f;
+
+                for (int x = 0; x < eyeMap.width; ++x)
+                {
+                    int index = x + y * eyeMap.width;
+                    // only sample where alpha == 1
+                    if (pixelData[index].a == 1.0f)
+                        pixelData[index].r = pixelData[index].g = pixelData[index].b = sampleStimulusField(p);
+
+                    // move x coord over
+                    p.x += mapStepX;
+                }
+
+                // move y coord up
+                p.y += mapStepY;
+            }
+
+            eyeMap.SetPixels(pixelData);
+            eyeMap.Apply();
+
+            return eyeMap;
+        }
+        else
+        {
+            Debug.Log("failed to load eyemap_left :(");
+            return null;
+        }
     }
 }
