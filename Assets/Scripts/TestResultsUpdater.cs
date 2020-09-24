@@ -28,7 +28,7 @@ public class TestResultsUpdater : MonoBehaviour
 
     private void OnEnable()
     {
-        TestInfo ti = GameObject.Find("AppControl").GetComponent<Main>().lastTestInfo;
+        TestInfo ti = GameObject.Find("AppControl").GetComponent<Main>().testInfo;
 
         if (ti != null)
         {

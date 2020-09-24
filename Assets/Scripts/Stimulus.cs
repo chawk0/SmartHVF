@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Runtime.Serialization;
 using UnityEngine;
 
 // this object represents one stimulus point in the stimulus field, and it's
@@ -7,9 +6,12 @@ using UnityEngine;
 // the _Color shader parameter is varied to change "brightness" and the scale
 // is manipulated to adjust the size, corresponding to Goldmann sizes I-V (needs to be calibrated)
 
+[DataContract(Name = "Stimulus")]
 public class Stimulus
 {
+    [DataMember(Name = "Pos")]
     public Vector3 position;
+    [DataMember(Name = "Brightness")]
     public float brightness;
     private float size;
 
@@ -23,15 +25,15 @@ public class Stimulus
         // save starting position
         this.position = startPosition;
         // create instance from prefab; start behind camera initially so it's not visible
-        this.instance = (GameObject)GameObject.Instantiate(prefab, startPosition, Quaternion.identity);
+        //this.instance = (GameObject)GameObject.Instantiate(prefab, startPosition, Quaternion.identity);
         // grab a reference to the material for setting the color
-        this.material = this.instance.GetComponent<Renderer>().material;
+        //this.material = this.instance.GetComponent<Renderer>().material;
         // set to black initially, though the starting brightness is 100%
-        this.material.SetColor("_Color", new Color(this.brightness, this.brightness, this.brightness));
+        //this.material.SetColor("_Color", new Color(this.brightness, this.brightness, this.brightness));
         //this.brightness = Random.Range(0.0f, 1.0f);
-        this.brightness = 1.0f;
+        this.brightness = 0.9f;
         // move into place
-        this.instance.transform.SetPositionAndRotation(this.position, Quaternion.identity);
+        //this.instance.transform.SetPositionAndRotation(this.position, Quaternion.identity);
     }
 
     ~Stimulus()

@@ -15,47 +15,47 @@ public enum TestType
 }
 public class TestInfo
 {
-    private TestType _type;
-    private int _stimulusSize;
-    private DateTime _dateTime;
-    private int _duration;
-    private Patient _patient;
-    private float _camOrthoSize, _stepSize;
+    public TestType type;
+    public int stimulusSize;
+    public DateTime dateTime;
+    public int duration;
+    public Patient patient;
+    public float camOrthoSize, stepSize;
 
-    private List<Stimulus> _stimulusField, _shuffledField;
-    private GameObject _stimulusPrefab;
-    private Vector3 _stimulusFieldBoundsMin, _stimulusFieldBoundsMax;
+    public List<Stimulus> stimulusField, shuffledField;
+    public GameObject stimulusPrefab;
+    public Vector3 stimulusFieldBoundsMin, stimulusFieldBoundsMax;
 
 
     public TestInfo(TestType type, Patient patient, float camOrthoSize, int stimulusSize = 2)
     {
-        _type = type;
-        _patient = patient;
-        _camOrthoSize = camOrthoSize;
-        _stimulusSize = stimulusSize;
-        setStimulusFieldSize(_stimulusSize);
+        this.type = type;
+        this.patient = patient;
+        this.camOrthoSize = camOrthoSize;
+        this.stimulusSize = stimulusSize;
+        //setStimulusFieldSize(_stimulusSize);
 
         buildStimulusField();
     }
 
     private void buildStimulusField()
     {
-        _stimulusField = new List<Stimulus>();
-        _stimulusPrefab = GameObject.Find("AppControl").GetComponent<Main>().stimulusPrefab;
+        this.stimulusField = new List<Stimulus>();
+        this.stimulusPrefab = GameObject.Find("AppControl").GetComponent<Main>().stimulusPrefab;
 
         // generates the approximate stimulus pattern from an actual HVF 24-2 test.
         int[] rowLengths = { 4, 6, 8, 10, 10, 8, 6, 4 };
 
         float fieldScale = 1.0f;
-        _stepSize = _camOrthoSize * 2.0f / (rowLengths.Length + 1) * fieldScale;
+        this.stepSize = this.camOrthoSize * 2.0f / (rowLengths.Length + 1) * fieldScale;
         Vector3 pos = Vector3.zero;
 
         for (int y = 0; y < rowLengths.Length; ++y)
         {
             for (int x = 0; x < rowLengths[y]; ++x)
             {
-                pos.x = -(float)(rowLengths[y] - 1) / 2.0f * _stepSize + (float)x * _stepSize;
-                pos.y = -(float)(rowLengths.Length - 1) / 2.0f * _stepSize + (float)y * _stepSize;
+                pos.x = -(float)(rowLengths[y] - 1) / 2.0f * this.stepSize + (float)x * this.stepSize;
+                pos.y = -(float)(rowLengths.Length - 1) / 2.0f * this.stepSize + (float)y * this.stepSize;
                 // default z plane for the stimulus field is -15.  during the test, they're
                 // moved to z = 0
                 pos.z = -15.0f;
@@ -66,49 +66,49 @@ public class TestInfo
                 if (y == 3 || y == 4)
                 {
                     // left eye test has extra stimuli on the right, so skip the left ones
-                    if (_type == TestType.LeftEye && x == 0)
+                    if (this.type == TestType.LeftEye && x == 0)
                         continue;
                     // and vice versa
-                    else if (_type == TestType.RightEye && x == 9)
+                    else if (this.type == TestType.RightEye && x == 9)
                         continue;
                 }
 
-                _stimulusField.Add(new Stimulus(_stimulusPrefab, pos));
+                this.stimulusField.Add(new Stimulus(this.stimulusPrefab, pos));
             }
         }
 
         // find the extents of the stimulus field in world space
-        _stimulusFieldBoundsMin = new Vector3(float.MaxValue, float.MaxValue, 0);
-        _stimulusFieldBoundsMax = new Vector3(float.MinValue, float.MinValue, 0);
+        this.stimulusFieldBoundsMin = new Vector3(float.MaxValue, float.MaxValue, 0);
+        this.stimulusFieldBoundsMax = new Vector3(float.MinValue, float.MinValue, 0);
 
-        foreach (Stimulus s in _stimulusField)
+        foreach (Stimulus s in this.stimulusField)
         {
-            if (s.position.x < _stimulusFieldBoundsMin.x)
-                _stimulusFieldBoundsMin.x = s.position.x;
-            if (s.position.y < _stimulusFieldBoundsMin.y)
-                _stimulusFieldBoundsMin.y = s.position.y;
+            if (s.position.x < this.stimulusFieldBoundsMin.x)
+                this.stimulusFieldBoundsMin.x = s.position.x;
+            if (s.position.y < this.stimulusFieldBoundsMin.y)
+                this.stimulusFieldBoundsMin.y = s.position.y;
 
-            if (s.position.x > _stimulusFieldBoundsMax.x)
-                _stimulusFieldBoundsMax.x = s.position.x;
-            if (s.position.y > _stimulusFieldBoundsMax.y)
-                _stimulusFieldBoundsMax.y = s.position.y;
+            if (s.position.x > this.stimulusFieldBoundsMax.x)
+                this.stimulusFieldBoundsMax.x = s.position.x;
+            if (s.position.y > this.stimulusFieldBoundsMax.y)
+                this.stimulusFieldBoundsMax.y = s.position.y;
         }
 
         // expand the bounds by half the step size in each direction
-        _stimulusFieldBoundsMin.x -= (_stepSize / 2.0f);
-        _stimulusFieldBoundsMin.y -= (_stepSize / 2.0f);
-        _stimulusFieldBoundsMax.x += (_stepSize / 2.0f);
-        _stimulusFieldBoundsMax.y += (_stepSize / 2.0f);
+        this.stimulusFieldBoundsMin.x -= (this.stepSize / 2.0f);
+        this.stimulusFieldBoundsMin.y -= (this.stepSize / 2.0f);
+        this.stimulusFieldBoundsMax.x += (this.stepSize / 2.0f);
+        this.stimulusFieldBoundsMax.y += (this.stepSize / 2.0f);
 
         // build a second list that is a shuffled version of the first
-        _shuffledField = new List<Stimulus>();
-        List<Stimulus> temp = new List<Stimulus>(_stimulusField);
+        this.shuffledField = new List<Stimulus>();
+        List<Stimulus> temp = new List<Stimulus>(this.stimulusField);
         System.Random rng = new System.Random();
 
         while (temp.Count > 0)
         {
             int index = rng.Next(0, temp.Count);
-            _shuffledField.Add(_stimulusField[index]);
+            this.shuffledField.Add(this.stimulusField[index]);
             temp.RemoveAt(index);
         }
 
@@ -122,7 +122,7 @@ public class TestInfo
         // size 0 to 4 maps to Goldmann sizes I to IV.  each size is 4x the area as the previous, so x/y scale is doubled
         float newScale = 0.025f * (float)Math.Pow(2.0, (double)size);
 
-        foreach (Stimulus s in _stimulusField)
+        foreach (Stimulus s in this.stimulusField)
             s.setScale(newScale);
     }
 
@@ -130,7 +130,7 @@ public class TestInfo
     private void stageStimulusField()
     {
         // stage the stimuli at z = 0 so they're in view of the camera and ready for the test
-        foreach (Stimulus s in _stimulusField)
+        foreach (Stimulus s in this.stimulusField)
         {
             s.hide();
             s.setZ(0);
@@ -140,24 +140,26 @@ public class TestInfo
 
     private void hideStimulusField()
     {
-        foreach (Stimulus s in _stimulusField)
+        foreach (Stimulus s in this.stimulusField)
         {
             s.hide();
             s.setZ(-15.0f);
         }
     }
 
+    /*
     public IEnumerator testProcedure()
     {
         //
     }
+    */
 
     private float sampleStimulusField(Vector3 pos)
     {
         // construct a list of tuples, storing a reference to a stimulus and the distance from pos
         List<Tuple<Stimulus, float>> distanceList = new List<Tuple<Stimulus, float>>();
 
-        foreach (Stimulus s in _stimulusField)
+        foreach (Stimulus s in this.stimulusField)
         {
             float d = Vector3.Distance(pos, s.position);
             distanceList.Add(new Tuple<Stimulus, float>(s, d));
@@ -178,7 +180,7 @@ public class TestInfo
         int sampleCount = 0;
         foreach (var t in distanceList)
         {
-            if (t.Item2 <= (_stepSize * 0.7778f))
+            if (t.Item2 <= (this.stepSize * 0.7778f))
             {
                 sample += (1.0f - t.Item1.brightness);
                 sampleCount++;
@@ -205,20 +207,20 @@ public class TestInfo
             pixelData = eyeMap.GetPixels();
 
             // the step size to move for each sample, in world coords
-            float mapStepX = (float)(_stimulusFieldBoundsMax.x - _stimulusFieldBoundsMin.x) / eyeMap.width;
-            float mapStepY = (float)(_stimulusFieldBoundsMax.y - _stimulusFieldBoundsMin.y) / eyeMap.height;
+            float mapStepX = (float)(this.stimulusFieldBoundsMax.x - this.stimulusFieldBoundsMin.x) / eyeMap.width;
+            float mapStepY = (float)(this.stimulusFieldBoundsMax.y - this.stimulusFieldBoundsMin.y) / eyeMap.height;
 
             // start at the bottom left corner of the field bounds (biased to the center of the sample)
             Vector3 p = new Vector3();
-            p.x = _stimulusFieldBoundsMin.x + mapStepX / 2.0f;
-            p.y = _stimulusFieldBoundsMin.y + mapStepY / 2.0f;
+            p.x = this.stimulusFieldBoundsMin.x + mapStepX / 2.0f;
+            p.y = this.stimulusFieldBoundsMin.y + mapStepY / 2.0f;
             p.z = -15.0f;
 
             // iterate through the eyemap, using the alpha channel to tell where to sample (a == 1)
             for (int y = 0; y < eyeMap.height; ++y)
             {
                 // at the start of each row, reset x coord to the left
-                p.x = _stimulusFieldBoundsMin.x + mapStepX / 2.0f;
+                p.x = this.stimulusFieldBoundsMin.x + mapStepX / 2.0f;
 
                 for (int x = 0; x < eyeMap.width; ++x)
                 {

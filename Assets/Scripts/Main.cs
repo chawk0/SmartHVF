@@ -78,6 +78,14 @@ public class Main : MonoBehaviour
         btLib = new AndroidJavaObject("com.example.testlibrary.TestClass");
         //btLib.Call("InitBluetooth", new object[] { unityContext });
         */
+
+        //Patient p = new Patient("Philip Lancaster", 20);
+        //p.testSerialize();
+        Patient p = new Patient();
+        p.testRead();
+
+        Debug.Log("Patient p: name: " + p.name + ", age: " + p.age);
+        Debug.Log("Patient p.testList == null?: " + (p.testList == null).ToString());
     }
 
     // Update is called once per frame
@@ -155,10 +163,10 @@ public class Main : MonoBehaviour
     public void BeginTestButton_Click()
     {
         // build a test info object to hand off to the testing routine.
-        Patient patient = new Patient();
+        Patient patient = new Patient("Joe Bob", 42);
 
-        patient.age = 42;
-        patient.name = "Joe Bob";
+        //patient.age = 42;
+        //patient.name = "Joe Bob";
 
         Toggle leftEye = GameObject.Find("LeftEyeToggle").GetComponent<Toggle>();
         TestType tt = leftEye.isOn ? TestType.LeftEye : TestType.RightEye;
@@ -232,7 +240,7 @@ public class Main : MonoBehaviour
         
 
         Debug.Log("Starting test...");
-        Debug.Log("Test info: " + testInfo.type + ", stimulus size: " + testInfo.stimulusSize + ", datetime: " + testInfo.dateTime.ToString("yyyyMMdd-HH-mm-ss"));
+        //Debug.Log("Test info: " + testInfo.type + ", stimulus size: " + testInfo.stimulusSize + ", datetime: " + testInfo.dateTime.ToString("yyyyMMdd-HH-mm-ss"));
 
         // wait for 1 second before beginning test
         yield return new WaitForSeconds(1);
@@ -242,10 +250,10 @@ public class Main : MonoBehaviour
 
         // iterate through stimuli
         //foreach (Stimulus s in shuffledField)
-        Stimulus s;
+        //Stimulus s;
         for (int i = 0; i < 5; ++i)
         {
-            s = shuffledField[i];
+            //s = shuffledField[i];
             // the ramp down is the steady decrease in brightness for a given stimulus until it's no longer visible
             inRampDown = true;
             while (inRampDown)
@@ -254,7 +262,7 @@ public class Main : MonoBehaviour
                 stimulusSeen = false;
 
                 // show the stimulus at its current brightness
-                s.show();
+                //s.show();
 
                 // clear the input status in the Java BT library
                 //btLib.Call("ClearInput");
@@ -263,7 +271,7 @@ public class Main : MonoBehaviour
                 yield return new WaitForSeconds(0.2f);
 
                 // hide it
-                s.hide();
+                //s.hide();
 
                 // start the timeout timer for 3 seconds
                 tot.start(1.0f);
@@ -311,6 +319,7 @@ public class Main : MonoBehaviour
         }
         */
 
+        /*
         testInfo.duration = (int)Time.time - testInfo.duration;
         lastTestInfo = testInfo;
         Debug.Log("Test complete");
@@ -342,6 +351,7 @@ public class Main : MonoBehaviour
         Debug.Log("Switching to test results panel...");
         // transition to test results panel
         testResultsPanel.SetActive(true);        
+        */
     }
 
     public void testSave()
