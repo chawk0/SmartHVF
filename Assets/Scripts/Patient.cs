@@ -8,8 +8,16 @@ using UnityEngine;
 
 public class Patient
 {
-    public string name;
+    private string _name;
     public int age;
+
+    public string name
+    {
+        get
+        {
+            return _name;
+        }
+    }
 
     public List<TestInfo> testHistory;
 }
