@@ -1,9 +1,17 @@
-﻿using System;
+﻿using SimpleFileBrowser;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 using UnityEngine.UI;
+
+// enum type to specify which UI panel is currently active/shown.
+// the InTest state would have everything hidden while the test coroutine runs
+public enum UIState
+{
+    MainMenu, LoadPatient, NewPatient, BrowseTestHistory, NewTestSetup, InTest, TestResults
+}
 
 public class Main : MonoBehaviour
 {
@@ -12,10 +20,12 @@ public class Main : MonoBehaviour
     public GameObject crosshair;
     public RenderTexture resultsTexture;
 
+    public GameObject[] UIPanels;
     public GameObject mainMenuPanel;
     public GameObject testConfigPanel;
     public GameObject patientDataPanel;
     public GameObject testResultsPanel;
+    public GameObject loadPatientPanel;
 
     public Camera mainCamera;
     public GameObject testResultsPreviewBackdrop;
@@ -33,6 +43,8 @@ public class Main : MonoBehaviour
     // used in generating the field and grayscale map
     private float camOrthoSize;
     private float stepSize;
+
+    private Patient currentPatient = null;
 
     // holds the most recent test result's generated eyemap
     //private Texture2D testResultEyeMap;
@@ -58,10 +70,13 @@ public class Main : MonoBehaviour
         stimulusSeen = false;
         lastTouchStartTime = 0;
 
-        mainMenuPanel.SetActive(true);
-        testConfigPanel.SetActive(false);
-        patientDataPanel.SetActive(false);
-        testResultsPanel.SetActive(false);
+        setUIState(UIState.MainMenu);
+
+        if (currentPatient == null)
+        {
+            GameObject.Find("/Canvas/MainMenuPanel/NewTestButton").GetComponent<Button>().interactable = false;
+            GameObject.Find("/Canvas/MainMenuPanel/BrowseTestHistoryButton").GetComponent<Button>().interactable = false;
+        }
 
         // create the timeout timer
         tot = new TimeoutTimer();
@@ -81,11 +96,55 @@ public class Main : MonoBehaviour
 
         //Patient p = new Patient("Philip Lancaster", 20);
         //p.testSerialize();
+
+        //Debug.Log("new patient GUID: " + p.guid);
+
         Patient p = new Patient();
         p.testRead();
 
         Debug.Log("Patient p: name: " + p.name + ", age: " + p.age);
         Debug.Log("Patient p.testList == null?: " + (p.testList == null).ToString());
+        Debug.Log("Patient p GUID: " + p.guid);
+
+        Guid g = new Guid("bbe733a5-9e6d-43b0-a711-aa9ebf981959");
+
+        Debug.Log("sample guid: " + g);
+        Debug.Log("sample guid == p.guid?: " + (g.Equals(p.guid)).ToString());
+
+        
+    }
+
+    public void TestOnSuccess(string[] paths)
+    {
+        Debug.Log("string[] paths length: " + paths.Length + ", paths[0]: " + paths[0]);
+    }
+
+    public void TestOnCancel()
+    {
+        Debug.Log("FileBrowser.ShowLoadDialog canceled");
+    }
+
+    public void TestButton_Click()
+    {
+        FileBrowser.ShowLoadDialog(TestOnSuccess, TestOnCancel, false, false, Application.persistentDataPath);
+    }
+
+    private void setUIState(UIState newState)
+    {
+        // hide any active UI panels
+        foreach (GameObject o in UIPanels)
+            o.SetActive(false);
+
+        // activate the requested one
+        switch (newState)
+        {
+            case UIState.MainMenu:          UIPanels[0].SetActive(true); break;
+            case UIState.NewTestSetup:      UIPanels[1].SetActive(true); break;
+            case UIState.LoadPatient:       UIPanels[2].SetActive(true); break;
+            case UIState.BrowseTestHistory: UIPanels[3].SetActive(true); break;
+            case UIState.TestResults:       UIPanels[4].SetActive(true); break;
+            case UIState.NewPatient:        UIPanels[5].SetActive(true); break;
+        }
     }
 
     // Update is called once per frame
@@ -158,6 +217,11 @@ public class Main : MonoBehaviour
             Debug.Log("writing sample file " + filePath + " ...");
         }
         
+    }
+
+    public void LoadPatientButton_Click()
+    {
+        //
     }
 
     public void BeginTestButton_Click()

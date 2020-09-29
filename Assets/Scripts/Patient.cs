@@ -16,6 +16,8 @@ public class Patient
     public string name;
     [DataMember(Name = "Age")]
     public int age;
+    [DataMember(Name = "GUID")]
+    public Guid guid;
 
     public List<TestInfo> testHistory;
 
@@ -32,6 +34,8 @@ public class Patient
         this.name = name;
         this.age = age;
         this.testList = null;// new List<Stimulus>();
+        this.guid = Guid.NewGuid();
+
         //testList.Add(new Stimulus(null, new Vector3(1.1f, 1.2f, 1.3f)));
         //testList.Add(new Stimulus(null, new Vector3(3.1f, 2.1f, 1.1f)));
     }
@@ -66,6 +70,7 @@ public class Patient
             this.age = p.age;
             this.name = p.name;
             this.testList = p.testList;
+            this.guid = p.guid;
 
             Debug.Log("Read test Patient object as serialized XML!");
         }
