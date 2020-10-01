@@ -8,9 +8,9 @@ using UnityEngine.UI;
 
 // enum type to specify which UI panel is currently active/shown.
 // the InTest state would have everything hidden while the test coroutine runs
-public enum UIState
+public enum UIPanel
 {
-    MainMenu, LoadPatient, NewPatient, BrowseTestHistory, NewTestSetup, InTest, TestResults
+    MainMenu, LoadPatient, BrowseTestHistory, NewTestSetup, InTest, TestResults
 }
 
 public class Main : MonoBehaviour
@@ -21,11 +21,13 @@ public class Main : MonoBehaviour
     public RenderTexture resultsTexture;
 
     public GameObject[] UIPanels;
+    /*
     public GameObject mainMenuPanel;
     public GameObject testConfigPanel;
     public GameObject patientDataPanel;
     public GameObject testResultsPanel;
     public GameObject loadPatientPanel;
+    */
 
     public Camera mainCamera;
     public GameObject testResultsPreviewBackdrop;
@@ -44,7 +46,8 @@ public class Main : MonoBehaviour
     private float camOrthoSize;
     private float stepSize;
 
-    private Patient currentPatient = null;
+    //[HideInInspector]
+    public Patient currentPatient = null;
 
     // holds the most recent test result's generated eyemap
     //private Texture2D testResultEyeMap;
@@ -70,13 +73,15 @@ public class Main : MonoBehaviour
         stimulusSeen = false;
         lastTouchStartTime = 0;
 
-        setUIState(UIState.MainMenu);
+        setActivePanel(UIPanel.MainMenu);
 
+        /*
         if (currentPatient == null)
         {
             GameObject.Find("/Canvas/MainMenuPanel/NewTestButton").GetComponent<Button>().interactable = false;
             GameObject.Find("/Canvas/MainMenuPanel/BrowseTestHistoryButton").GetComponent<Button>().interactable = false;
         }
+        */
 
         // create the timeout timer
         tot = new TimeoutTimer();
@@ -99,6 +104,7 @@ public class Main : MonoBehaviour
 
         //Debug.Log("new patient GUID: " + p.guid);
 
+        /*
         Patient p = new Patient();
         p.testRead();
 
@@ -110,7 +116,7 @@ public class Main : MonoBehaviour
 
         Debug.Log("sample guid: " + g);
         Debug.Log("sample guid == p.guid?: " + (g.Equals(p.guid)).ToString());
-
+        */
         
     }
 
@@ -126,10 +132,26 @@ public class Main : MonoBehaviour
 
     public void TestButton_Click()
     {
-        FileBrowser.ShowLoadDialog(TestOnSuccess, TestOnCancel, false, false, Application.persistentDataPath);
+        //mainMenuPanel.GetComponent<CanvasRenderer>().cull = true;
+
+        //FileBrowser.ShowLoadDialog(TestOnSuccess, TestOnCancel, false, false, Application.persistentDataPath);
+        /*
+        string path = Application.persistentDataPath;
+        string cwd = Directory.GetCurrentDirectory();
+        string[] dirs = Directory.GetDirectories(cwd);
+        string[] files = Directory.GetFiles(cwd);
+
+        Debug.Log("Current working directory: " + cwd);
+        Debug.Log("Directories:");
+        foreach (string d in dirs)
+            Debug.Log(d);
+        Debug.Log("Files:");
+        foreach (string f in files)
+            Debug.Log(f);
+        */
     }
 
-    private void setUIState(UIState newState)
+    public void setActivePanel(UIPanel newState)
     {
         // hide any active UI panels
         foreach (GameObject o in UIPanels)
@@ -138,12 +160,11 @@ public class Main : MonoBehaviour
         // activate the requested one
         switch (newState)
         {
-            case UIState.MainMenu:          UIPanels[0].SetActive(true); break;
-            case UIState.NewTestSetup:      UIPanels[1].SetActive(true); break;
-            case UIState.LoadPatient:       UIPanels[2].SetActive(true); break;
-            case UIState.BrowseTestHistory: UIPanels[3].SetActive(true); break;
-            case UIState.TestResults:       UIPanels[4].SetActive(true); break;
-            case UIState.NewPatient:        UIPanels[5].SetActive(true); break;
+            case UIPanel.MainMenu:          UIPanels[0].SetActive(true); break;
+            case UIPanel.NewTestSetup:      UIPanels[1].SetActive(true); break;
+            case UIPanel.LoadPatient:       UIPanels[2].SetActive(true); break;
+            case UIPanel.BrowseTestHistory: UIPanels[3].SetActive(true); break;
+            case UIPanel.TestResults:       UIPanels[4].SetActive(true); break;
         }
     }
 
@@ -190,6 +211,7 @@ public class Main : MonoBehaviour
             tot.update();
     }
 
+    /*
     public void TestSaveButton_Click()
     {
         //mainMenuPanel.SetActive(false);
@@ -218,12 +240,9 @@ public class Main : MonoBehaviour
         }
         
     }
+    */
 
-    public void LoadPatientButton_Click()
-    {
-        //
-    }
-
+    /*
     public void BeginTestButton_Click()
     {
         // build a test info object to hand off to the testing routine.
@@ -245,32 +264,32 @@ public class Main : MonoBehaviour
         crosshair.GetComponent<Transform>().SetPositionAndRotation(Vector3.zero, Quaternion.identity);
         // start the test routine
         StartCoroutine(fieldTest2(testInfo));
-    }
+    }*/
 
-    public void CancelNewTestButton_Click()
+    /*public void CancelNewTestButton_Click()
     {
         testConfigPanel.SetActive(false);
         mainMenuPanel.SetActive(true);
-    }
+    }*/
 
-    public void ExitButton_Click()
+    /*public void ExitButton_Click()
     {
         Application.Quit();
-    }
+    }*/
 
-    public void SaveTestResultsButton_Click()
+    /*public void SaveTestResultsButton_Click()
     {
         testSave();
-    }
+    }*/
 
-    public void BackButton_Click()
+    /*public void BackButton_Click()
     {
         testResultsPreviewBackdrop.SetActive(false);
         testResultsPanel.SetActive(false);
         mainMenuPanel.SetActive(true);
-    }
+    }*/
 
-    public void PanelTest()
+    /*public void PanelTest()
     {
         GameObject input = GameObject.Find("InputField");
         GameObject label = GameObject.Find("TextLabel");
@@ -290,7 +309,7 @@ public class Main : MonoBehaviour
             else
                 Debug.Log("something's null!  inputText: " + (inputText == null) + ", textText: " + (labelText == null));
         }
-    }
+    }*/
 
 
     
@@ -369,7 +388,7 @@ public class Main : MonoBehaviour
 
 
                     crosshair.GetComponent<Transform>().SetPositionAndRotation(new Vector3(0, 0, -5.0f), Quaternion.identity);
-                    testConfigPanel.SetActive(true);
+                    //testConfigPanel.SetActive(true);
                     yield break;
                 }
             }
