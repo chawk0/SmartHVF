@@ -17,68 +17,84 @@ public class Patient
     [DataMember(Name = "Age")]
     public int age;
     [DataMember(Name = "GUID")]
-    public Guid guid;
+    public string guid;
 
     public List<TestInfo> testHistory;
 
     [DataMember(Name = "StimulusList")]
     public List<Stimulus> testList;
 
+    public string dataFileName, dataFileFullPath;
+
     public Patient()
     {
         //
     }
 
-    public Patient(string name, int age)
+    public Patient(string name, int age, string guid)
     {
         this.name = name;
         this.age = age;
-        this.testList = null;// new List<Stimulus>();
-        this.guid = Guid.NewGuid();
+        this.guid = guid;
+        this.testList = null;
 
-        //testList.Add(new Stimulus(null, new Vector3(1.1f, 1.2f, 1.3f)));
-        //testList.Add(new Stimulus(null, new Vector3(3.1f, 2.1f, 1.1f)));
+        this.dataFileName = null;
+        this.dataFileFullPath = null;
     }
 
-    public void testSerialize()
+    public void saveToFile()
     {
+        string guidChunk = this.guid.Substring(0, this.guid.IndexOf('-'));
+        string fileName = this.name + "-" + guidChunk + ".xml";
+        //FileStream f = File.Create(Application.persistentDataPath + "/Patients/" + fileName);
+        this.dataFileName = fileName;
+        this.dataFileFullPath = Application.persistentDataPath + "/Patients/" + this.dataFileName;
+        //Debug.Log("Patient.saveToFile would write to " + this.dataFileFullPath);
+
         try
         {
             DataContractSerializer s = new DataContractSerializer(this.GetType());
-            FileStream f = File.Create(Application.persistentDataPath + "/patient.xml");
+            FileStream f = File.Create(this.dataFileFullPath);
 
             s.WriteObject(f, this);
             f.Close();
 
-            Debug.Log("Wrote test Patient object as serialized XML!");
+            Debug.Log("Wrote Patient object as serialized XML!");
         }
         catch (Exception e)
         {
-            Debug.Log("Failed to write serialized test object!  reason: " + e.Message);
+            Debug.Log("Failed to write serialized Patient object!  reason: " + e.Message);
         }
     }
 
-    public void testRead()
+    public static Patient readFromFile(string path)
     {
         try
         {
-            FileStream f = File.Open(Application.persistentDataPath + "/patient.xml", FileMode.Open);
+            FileStream f = File.Open(path, FileMode.Open);
             XmlReader reader = XmlReader.Create(f);
             DataContractSerializer s = new DataContractSerializer(typeof(Patient));
             Patient p = (Patient)s.ReadObject(reader, false);
 
+            f.Close();
+            reader.Close();
+
+            /*
             this.age = p.age;
             this.name = p.name;
             this.testList = p.testList;
             this.guid = p.guid;
+            */
 
-            Debug.Log("Read test Patient object as serialized XML!");
+            Debug.Log("Read Patient object as serialized XML!");
+
+            return p;
         }
         catch (Exception e)
         {
-            Debug.Log("Failed to read serialized object!  reason: " + e.Message);
+            Debug.Log("Failed to read serialized Patient object!  reason: " + e.Message);
+
+            return null;
         }
-
-
     }
 }

@@ -73,6 +73,7 @@ public class Main : MonoBehaviour
         stimulusSeen = false;
         lastTouchStartTime = 0;
 
+        // start app on the main menu panel
         setActivePanel(UIPanel.MainMenu);
 
         /*
@@ -120,6 +121,8 @@ public class Main : MonoBehaviour
         
     }
 
+    
+    /*
     public void TestOnSuccess(string[] paths)
     {
         Debug.Log("string[] paths length: " + paths.Length + ", paths[0]: " + paths[0]);
@@ -128,7 +131,7 @@ public class Main : MonoBehaviour
     public void TestOnCancel()
     {
         Debug.Log("FileBrowser.ShowLoadDialog canceled");
-    }
+    }*/
 
     public void TestButton_Click()
     {
