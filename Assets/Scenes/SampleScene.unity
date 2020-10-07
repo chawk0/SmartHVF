@@ -264,7 +264,7 @@ GameObject:
   - component: {fileID: 4930199}
   - component: {fileID: 4930198}
   m_Layer: 5
-  m_Name: CancelNewTestButton
+  m_Name: CancelButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -333,8 +333,8 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1828889815}
-        m_MethodName: CancelNewTestButton_Click
+      - m_Target: {fileID: 1070992227}
+        m_MethodName: CancelButton_Click
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -1589,7 +1589,7 @@ GameObject:
   - component: {fileID: 329907549}
   - component: {fileID: 329907548}
   m_Layer: 5
-  m_Name: PatientAgeGUIDText
+  m_Name: PatientGUIDText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1653,7 +1653,7 @@ MonoBehaviour:
     m_PressedTrigger: Pressed
     m_SelectedTrigger: Selected
     m_DisabledTrigger: Disabled
-  m_Interactable: 0
+  m_Interactable: 1
   m_TargetGraphic: {fileID: 329907549}
   m_TextComponent: {fileID: 1707167545}
   m_Placeholder: {fileID: 0}
@@ -1677,7 +1677,7 @@ MonoBehaviour:
   m_Text: 
   m_CaretBlinkRate: 0.85
   m_CaretWidth: 1
-  m_ReadOnly: 0
+  m_ReadOnly: 1
 --- !u!114 &329907549
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1796,7 +1796,18 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 346870317}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1063030344}
+        m_MethodName: SaveButton_Click
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &346870317
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2067,7 +2078,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: /storage/emulated/0/Android/data/com.USF.SmartHVF/files/Patients/Lan
+  m_Text: 
 --- !u!222 &444819037
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -2371,7 +2382,18 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 532512052}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1063030344}
+        m_MethodName: BrowseButton_Click
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &532512052
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2624,7 +2646,7 @@ GameObject:
   - component: {fileID: 752212800}
   - component: {fileID: 752212799}
   m_Layer: 5
-  m_Name: PatientDataTitle
+  m_Name: EnterPatientInfoLabel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3338,7 +3360,18 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 878191147}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1063030344}
+        m_MethodName: CancelButton_Click
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &878191147
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3833,7 +3866,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1063030341
 RectTransform:
   m_ObjectHideFlags: 0
@@ -3926,6 +3959,7 @@ GameObject:
   - component: {fileID: 1070992224}
   - component: {fileID: 1070992226}
   - component: {fileID: 1070992225}
+  - component: {fileID: 1070992227}
   m_Layer: 5
   m_Name: NewTestSetupPanel
   m_TagString: Untagged
@@ -3998,6 +4032,18 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1070992223}
   m_CullTransparentMesh: 0
+--- !u!114 &1070992227
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1070992223}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f53180ba2fa4a9d49975587ef1396929, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1080079471
 GameObject:
   m_ObjectHideFlags: 0
@@ -4164,13 +4210,13 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1141314186}
   m_TextComponent: {fileID: 1351937733}
   m_Placeholder: {fileID: 0}
-  m_ContentType: 0
+  m_ContentType: 2
   m_InputType: 0
   m_AsteriskChar: 42
-  m_KeyboardType: 0
+  m_KeyboardType: 4
   m_LineType: 0
   m_HideMobileInput: 0
-  m_CharacterValidation: 0
+  m_CharacterValidation: 1
   m_CharacterLimit: 0
   m_OnEndEdit:
     m_PersistentCalls:
@@ -5110,7 +5156,18 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1399721325}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1521551548}
+        m_MethodName: NewTestButton_Click
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &1399721325
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5563,7 +5620,18 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1469188671}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1063030344}
+        m_MethodName: NewPatientButton_Click
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &1469188671
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5906,8 +5974,8 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1828889815}
-        m_MethodName: BeginTestButton_Click
+      - m_Target: {fileID: 1070992227}
+        m_MethodName: StartTestButton_Click
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -5972,7 +6040,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1632807624
 RectTransform:
   m_ObjectHideFlags: 0
@@ -7485,10 +7553,10 @@ MonoBehaviour:
   m_CaretColor: {r: 0.19607843, g: 0.19607843, b: 0.19607843, a: 1}
   m_CustomCaretColor: 0
   m_SelectionColor: {r: 0.65882355, g: 0.80784315, b: 1, a: 0.7529412}
-  m_Text: /storage/emulated/0/Android/data/com.USF.SmartHVF/files/Patients/LancasterPhilip-9f0101.xml
+  m_Text: 
   m_CaretBlinkRate: 0.85
   m_CaretWidth: 1
-  m_ReadOnly: 0
+  m_ReadOnly: 1
 --- !u!114 &2088193134
 MonoBehaviour:
   m_ObjectHideFlags: 0
