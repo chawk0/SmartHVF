@@ -19,10 +19,8 @@ public class Patient
     [DataMember(Name = "GUID")]
     public string guid;
 
+    [DataMember(Name = "TestHistory")]
     public List<TestInfo> testHistory;
-
-    [DataMember(Name = "StimulusList")]
-    public List<Stimulus> testList;
 
     public string dataFileName, dataFileFullPath;
 
@@ -36,7 +34,7 @@ public class Patient
         this.name = name;
         this.age = age;
         this.guid = guid;
-        this.testList = null;
+        this.testHistory = null;
 
         this.dataFileName = null;
         this.dataFileFullPath = null;
@@ -78,13 +76,6 @@ public class Patient
 
             f.Close();
             reader.Close();
-
-            /*
-            this.age = p.age;
-            this.name = p.name;
-            this.testList = p.testList;
-            this.guid = p.guid;
-            */
 
             Debug.Log("Read Patient object as serialized XML!");
 
