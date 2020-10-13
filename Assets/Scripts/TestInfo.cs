@@ -16,7 +16,7 @@ public enum TestType
 public class TestInfo
 {
     public TestType type;
-    public int stimulusSize;
+    public GoldmannSize stimulusSize;
     public DateTime dateTime;
     public int duration;
     public Patient patient;
@@ -27,13 +27,12 @@ public class TestInfo
     public Vector3 stimulusFieldBoundsMin, stimulusFieldBoundsMax;
 
 
-    public TestInfo(TestType type, Patient patient, float camOrthoSize, int stimulusSize = 2)
+    public TestInfo(TestType type, Patient patient, float camOrthoSize, GoldmannSize stimulusSize = GoldmannSize.III)
     {
         this.type = type;
         this.patient = patient;
         this.camOrthoSize = camOrthoSize;
         this.stimulusSize = stimulusSize;
-        //setStimulusFieldSize(_stimulusSize);
 
         buildStimulusField();
     }
@@ -46,8 +45,30 @@ public class TestInfo
         // generates the approximate stimulus pattern from an actual HVF 24-2 test.
         int[] rowLengths = { 4, 6, 8, 10, 10, 8, 6, 4 };
 
+        // used to adjust the overall scale of the field.  so far 1.0 is fine
         float fieldScale = 1.0f;
+        // stepSize represents the worldspace distance between neighboring stimuli
         this.stepSize = this.camOrthoSize * 2.0f / (rowLengths.Length + 1) * fieldScale;
+
+        // x/y loop to generate the roundish/diamond pattern
+        //                  x   x   x   x
+        //
+        //              x   x   x   x   x   x
+        //
+        //          x   x   x   x   x   x   x   x
+        //
+        //      R   x   x   x   x   x   x   x   x   L
+        //
+        //      R   x   x   x   x   x   x   x   x   L
+        //
+        //          x   x   x   x   x   x   x   x
+        //
+        //              x   x   x   x   x   x
+        //
+        //                  x   x   x   x
+        //
+        // the stimuli marked R are skipped for a left visual field, and vice versa for L
+
         Vector3 pos = Vector3.zero;
 
         for (int y = 0; y < rowLengths.Length; ++y)
@@ -58,11 +79,9 @@ public class TestInfo
                 pos.y = -(float)(rowLengths.Length - 1) / 2.0f * this.stepSize + (float)y * this.stepSize;
                 // default z plane for the stimulus field is -15.  during the test, they're
                 // moved to z = 0
-                pos.z = -15.0f;
+                pos.z = Stimulus.inactiveZPlane;
 
-                // the central 2 rows are 10 stimuli wide, but depending on whether the
-                // test is left or right eye, those extra 2 stimuli on the ends are either
-                // skipped or included
+                // add the two extra stimuli to the central 2 rows based on which eye the field is built for
                 if (y == 3 || y == 4)
                 {
                     // left eye test has extra stimuli on the right, so skip the left ones
@@ -73,11 +92,12 @@ public class TestInfo
                         continue;
                 }
 
-                this.stimulusField.Add(new Stimulus(this.stimulusPrefab, pos));
+                this.stimulusField.Add(new Stimulus(this.stimulusPrefab, pos, this.stimulusSize));
             }
         }
 
-        // find the extents of the stimulus field in world space
+        // find the extents of the stimulus field in world space.
+        // these bounds are used by the sampling algorithm to generate a finer-grained eyemap
         this.stimulusFieldBoundsMin = new Vector3(float.MaxValue, float.MaxValue, 0);
         this.stimulusFieldBoundsMax = new Vector3(float.MinValue, float.MinValue, 0);
 
@@ -100,6 +120,8 @@ public class TestInfo
         this.stimulusFieldBoundsMax.x += (this.stepSize / 2.0f);
         this.stimulusFieldBoundsMax.y += (this.stepSize / 2.0f);
 
+        
+
         // build a second list that is a shuffled version of the first
         this.shuffledField = new List<Stimulus>();
         List<Stimulus> temp = new List<Stimulus>(this.stimulusField);
@@ -112,47 +134,15 @@ public class TestInfo
             temp.RemoveAt(index);
         }
 
-        //Debug.Log("temp count: " + temp.Count);
-        //Debug.Log("shuffled field count: " + shuffledField.Count);
+        Debug.Log("stimulus field size: " + this.stimulusField.Count);
+        Debug.Log("shuffled field size: " + this.shuffledField.Count);
     }
 
-
-    private void setStimulusFieldSize(int size)
+    public void hideStimulusField()
     {
-        // size 0 to 4 maps to Goldmann sizes I to IV.  each size is 4x the area as the previous, so x/y scale is doubled
-        float newScale = 0.025f * (float)Math.Pow(2.0, (double)size);
-
         foreach (Stimulus s in this.stimulusField)
-            s.setScale(newScale);
-    }
-
-
-    private void stageStimulusField()
-    {
-        // stage the stimuli at z = 0 so they're in view of the camera and ready for the test
-        foreach (Stimulus s in this.stimulusField)
-        {
             s.hide();
-            s.setZ(0);
-            //s.brightness = 1.0f;
-        }
     }
-
-    private void hideStimulusField()
-    {
-        foreach (Stimulus s in this.stimulusField)
-        {
-            s.hide();
-            s.setZ(-15.0f);
-        }
-    }
-
-    /*
-    public IEnumerator testProcedure()
-    {
-        //
-    }
-    */
 
     private float sampleStimulusField(Vector3 pos)
     {

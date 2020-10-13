@@ -29,9 +29,14 @@ public class NewTestSetupPanelControl : MonoBehaviour
 
     public void StartTestButton_Click()
     {
-        TestType t = leftEyeToggle.isOn ? TestType.LeftEye : TestType.RightEye;
+        TestType tt = leftEyeToggle.isOn ? TestType.LeftEye : TestType.RightEye;
         int s = stimulusSizeDropdown.value;
-        Debug.Log("New test requested with eye: " + t + ", stimulus size index: " + s);
+        Debug.Log("New test requested with eye: " + tt + ", stimulus size index: " + s);
+
+        TestInfo ti = new TestInfo(tt, main.currentPatient, main.mainCamera.orthographicSize, (GoldmannSize)s);
+
+        //StartCoroutine(main.fieldTest2(ti));
+        main.startTest(ti);
     }
 
     public void CancelButton_Click()

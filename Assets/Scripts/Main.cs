@@ -10,7 +10,7 @@ using UnityEngine.UI;
 // the InTest state would have everything hidden while the test coroutine runs
 public enum UIPanel
 {
-    MainMenu, LoadPatient, BrowseTestHistory, NewTestSetup, InTest, TestResults
+    MainMenu, LoadPatient, BrowseTestHistory, NewTestSetup, None, TestResults
 }
 
 public class Main : MonoBehaviour
@@ -118,7 +118,6 @@ public class Main : MonoBehaviour
         Debug.Log("sample guid: " + g);
         Debug.Log("sample guid == p.guid?: " + (g.Equals(p.guid)).ToString());
         */
-        
     }
 
     
@@ -168,6 +167,8 @@ public class Main : MonoBehaviour
             case UIPanel.LoadPatient:       UIPanels[2].SetActive(true); break;
             case UIPanel.BrowseTestHistory: UIPanels[3].SetActive(true); break;
             case UIPanel.TestResults:       UIPanels[4].SetActive(true); break;
+
+            case UIPanel.None: break;     // no UI panels visible during test routine
         }
     }
 
@@ -315,15 +316,22 @@ public class Main : MonoBehaviour
     }*/
 
 
-    
+    // a bootstrap function to start the Co-routine.  during yields, it'll come back to this script
+    // which is always active (whereas UI panel scripts are active/inactive at various times)
+    public void startTest(TestInfo testInfo)
+    {
+        StartCoroutine(fieldTest2(testInfo));
+    }
 
 
-    IEnumerator fieldTest2(TestInfo testInfo)
+    public IEnumerator fieldTest2(TestInfo testInfo)
     {
         bool inRampDown;
 
-        // reset all stimuli to full brightness, start as hidden, and move to Z = 0
-        
+        setActivePanel(UIPanel.None);
+
+        testInfo.dateTime = System.DateTime.Now;
+        int startTime = (int)Time.time;
 
         Debug.Log("Starting test...");
         //Debug.Log("Test info: " + testInfo.type + ", stimulus size: " + testInfo.stimulusSize + ", datetime: " + testInfo.dateTime.ToString("yyyyMMdd-HH-mm-ss"));
@@ -336,10 +344,20 @@ public class Main : MonoBehaviour
 
         // iterate through stimuli
         //foreach (Stimulus s in shuffledField)
-        //Stimulus s;
+
+        foreach (Stimulus s in testInfo.shuffledField)
+            s.show();
+
+        stimulusSeen = false;
+        yield return new WaitUntil(() => stimulusSeen);
+
+        testInfo.hideStimulusField();
+        /*
+        Debug.Log("for loop starting...");
+        Stimulus s;
         for (int i = 0; i < 5; ++i)
         {
-            //s = shuffledField[i];
+            s = testInfo.shuffledField[i];
             // the ramp down is the steady decrease in brightness for a given stimulus until it's no longer visible
             inRampDown = true;
             while (inRampDown)
@@ -348,7 +366,7 @@ public class Main : MonoBehaviour
                 stimulusSeen = false;
 
                 // show the stimulus at its current brightness
-                //s.show();
+                s.show();
 
                 // clear the input status in the Java BT library
                 //btLib.Call("ClearInput");
@@ -357,7 +375,7 @@ public class Main : MonoBehaviour
                 yield return new WaitForSeconds(0.2f);
 
                 // hide it
-                //s.hide();
+                s.hide();
 
                 // start the timeout timer for 3 seconds
                 tot.start(1.0f);
@@ -367,6 +385,7 @@ public class Main : MonoBehaviour
 
                 if (stimulusSeen)
                 {
+                    Debug.Log("stimulus seen");
                     // decrease by 10%
                     //s.dimBy(0.1f);
                     //s.brightness = 0.0f;
@@ -377,6 +396,7 @@ public class Main : MonoBehaviour
                 }
                 else if (tot.timeout)
                 {
+                    Debug.Log("input timeout");
                     // we've hit the brightness threshold for this stimulus, so end this loop and start on next stimulus
                     inRampDown = false;
                     
@@ -390,24 +410,18 @@ public class Main : MonoBehaviour
                     abortTest = false;
 
 
-                    crosshair.GetComponent<Transform>().SetPositionAndRotation(new Vector3(0, 0, -5.0f), Quaternion.identity);
+                    //crosshair.GetComponent<Transform>().SetPositionAndRotation(new Vector3(0, 0, -5.0f), Quaternion.identity);
                     //testConfigPanel.SetActive(true);
                     yield break;
                 }
             }
         }
-
-        // at this point, the stimulus objects contain the brighness values at the threshold of visibility
-        /*
-        foreach(Stimulus s in stimulusField)
-        {
-            Debug.Log("stimulus at (" + s.position.x + ", " + s.position.y + ") visible down to brightness " + s.brightness);
-        }
         */
 
-        /*
-        testInfo.duration = (int)Time.time - testInfo.duration;
-        lastTestInfo = testInfo;
+        // at this point, the stimulus objects contain the brighness values at the threshold of visibility
+
+
+        testInfo.duration = (int)Time.time - startTime;
         Debug.Log("Test complete");
 
         stimulusSeen = false;
@@ -417,9 +431,7 @@ public class Main : MonoBehaviour
         // move crosshair behind the camera
         crosshair.GetComponent<Transform>().SetPositionAndRotation(new Vector3(0, 0, -5.0f), Quaternion.identity);
 
-        Debug.Log("Hiding stimulus field...");
-        hideStimulusField();
-
+        /*
         Debug.Log("Generating eyemap...");
         testResultEyeMap = generateEyeMap();
         testResultEyeMap.filterMode = FilterMode.Point;
@@ -438,6 +450,8 @@ public class Main : MonoBehaviour
         // transition to test results panel
         testResultsPanel.SetActive(true);        
         */
+
+        setActivePanel(UIPanel.TestResults);
     }
 
     public void testSave()
