@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Runtime.Serialization;
 using UnityEngine;
+using UnityEngine.Assertions.Must;
 
 // this object represents one stimulus point in the stimulus field, and it's
 // represented as a quad in world space, textured with a white circle.
@@ -34,7 +35,8 @@ public class Stimulus
         // initial position in worldspace
         this.position = startPosition;
         // create instance from prefab
-        this.instance = (GameObject)GameObject.Instantiate(prefab, startPosition, Quaternion.identity);
+        //this.instance = (GameObject)GameObject.Instantiate(prefab, startPosition, Quaternion.identity);
+        this.instance = (GameObject)MonoBehaviour.Instantiate(prefab, startPosition, Quaternion.identity);
         // grab a reference to the material for setting the color
         this.material = this.instance.GetComponent<Renderer>().material;
         // set to full brightness by default
@@ -49,6 +51,7 @@ public class Stimulus
 
     ~Stimulus()
     {
+        //Debug.Log("~Stimulus() invoked!");
         destroy();
     }
 
@@ -73,7 +76,18 @@ public class Stimulus
 
     public void destroy()
     {
-        UnityEngine.Object.Destroy(instance);
+        //Debug.Log("Stimulus.destroy() invoked!");
+        if (instance != null)
+        {
+            Debug.Log("destroying stimulus instance: " + instance.name + ", object: " + instance);
+            //UnityEngine.Object.Destroy(instance);
+            //MonoBehaviour.Destroy(instance);
+            UnityEngine.Object.DestroyImmediate(instance);
+            //Destroy(instance);
+            instance = null;
+        }
+        else
+            Debug.Log("can't destroy, stimulus instance null!");
     }
 
     private void computeScale(GoldmannSize size)

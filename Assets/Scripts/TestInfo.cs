@@ -25,6 +25,7 @@ public class TestInfo
     public List<Stimulus> stimulusField, shuffledField;
     public GameObject stimulusPrefab;
     public Vector3 stimulusFieldBoundsMin, stimulusFieldBoundsMax;
+    public Texture2D eyeMap;
 
 
     public TestInfo(TestType type, Patient patient, float camOrthoSize, GoldmannSize stimulusSize = GoldmannSize.III)
@@ -35,6 +36,18 @@ public class TestInfo
         this.stimulusSize = stimulusSize;
 
         buildStimulusField();
+    }
+
+    ~TestInfo()
+    {
+        Debug.Log("~TestInfo() called");
+        if (stimulusField != null)
+        {
+            Debug.Log("Destroying stimulus field, count: " + stimulusField.Count);
+            //foreach (Stimulus s in stimulusField)
+            //    s.destroy();
+            stimulusField.Clear();
+        }
     }
 
     private void buildStimulusField()
@@ -123,19 +136,27 @@ public class TestInfo
         
 
         // build a second list that is a shuffled version of the first
-        this.shuffledField = new List<Stimulus>();
-        List<Stimulus> temp = new List<Stimulus>(this.stimulusField);
+        this.shuffledField = new List<Stimulus>(this.stimulusField.Count);
+
+        // list of indices to randomly pick from
+        List<int> indexList = new List<int>(this.stimulusField.Count);
+        for (int i = 0; i < this.stimulusField.Count; i++)
+            indexList.Add(i);
+        
+        // rng
         System.Random rng = new System.Random();
 
-        while (temp.Count > 0)
+        // randomly pick and remove an index to from the list and add
+        // that corresponding stimulus to the shuffled list
+        while (indexList.Count > 0)
         {
-            int index = rng.Next(0, temp.Count);
-            this.shuffledField.Add(this.stimulusField[index]);
-            temp.RemoveAt(index);
+            int index = rng.Next(0, indexList.Count);
+            this.shuffledField.Add(this.stimulusField[indexList[index]]);
+            indexList.RemoveAt(index);
         }
 
-        Debug.Log("stimulus field size: " + this.stimulusField.Count);
-        Debug.Log("shuffled field size: " + this.shuffledField.Count);
+        //Debug.Log("stimulus field size: " + this.stimulusField.Count);
+        //Debug.Log("shuffled field size: " + this.shuffledField.Count);
     }
 
     public void hideStimulusField()
@@ -183,22 +204,22 @@ public class TestInfo
             return 1.0f - distanceList[0].Item1.brightness;
     }
 
-    public Texture2D generateEyeMap()
+    public void generateEyeMap()
     {
-        Texture2D eyeMap;// = new Texture2D(2, 2);
-
-        string filePath = "eyemap_left";
+        string filePath = (this.type == TestType.LeftEye) ? "eyemap_left" : "eyemap_right";
         Color[] pixelData;
 
-        eyeMap = Resources.Load<Texture2D>(filePath);
-        if (eyeMap != null)
+        this.eyeMap = Resources.Load<Texture2D>(filePath);
+        if (this.eyeMap != null)
         {
-            Debug.Log("texture size: " + eyeMap.width + " w x " + eyeMap.height + " h");
-            pixelData = eyeMap.GetPixels();
+            this.eyeMap.filterMode = FilterMode.Point;
+
+            Debug.Log("texture size: " + this.eyeMap.width + " w x " + this.eyeMap.height + " h");
+            pixelData = this.eyeMap.GetPixels();
 
             // the step size to move for each sample, in world coords
-            float mapStepX = (float)(this.stimulusFieldBoundsMax.x - this.stimulusFieldBoundsMin.x) / eyeMap.width;
-            float mapStepY = (float)(this.stimulusFieldBoundsMax.y - this.stimulusFieldBoundsMin.y) / eyeMap.height;
+            float mapStepX = (float)(this.stimulusFieldBoundsMax.x - this.stimulusFieldBoundsMin.x) / this.eyeMap.width;
+            float mapStepY = (float)(this.stimulusFieldBoundsMax.y - this.stimulusFieldBoundsMin.y) / this.eyeMap.height;
 
             // start at the bottom left corner of the field bounds (biased to the center of the sample)
             Vector3 p = new Vector3();
@@ -207,14 +228,14 @@ public class TestInfo
             p.z = -15.0f;
 
             // iterate through the eyemap, using the alpha channel to tell where to sample (a == 1)
-            for (int y = 0; y < eyeMap.height; ++y)
+            for (int y = 0; y < this.eyeMap.height; ++y)
             {
                 // at the start of each row, reset x coord to the left
                 p.x = this.stimulusFieldBoundsMin.x + mapStepX / 2.0f;
 
-                for (int x = 0; x < eyeMap.width; ++x)
+                for (int x = 0; x < this.eyeMap.width; ++x)
                 {
-                    int index = x + y * eyeMap.width;
+                    int index = x + y * this.eyeMap.width;
                     // only sample where alpha == 1
                     if (pixelData[index].a == 1.0f)
                         pixelData[index].r = pixelData[index].g = pixelData[index].b = sampleStimulusField(p);
@@ -227,15 +248,10 @@ public class TestInfo
                 p.y += mapStepY;
             }
 
-            eyeMap.SetPixels(pixelData);
-            eyeMap.Apply();
-
-            return eyeMap;
+            this.eyeMap.SetPixels(pixelData);
+            this.eyeMap.Apply();
         }
         else
-        {
-            Debug.Log("failed to load eyemap_left :(");
-            return null;
-        }
+            Debug.Log("failed to load eyemap!");
     }
 }

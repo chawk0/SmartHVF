@@ -3,6 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -10,7 +11,7 @@ using UnityEngine.UI;
 // the InTest state would have everything hidden while the test coroutine runs
 public enum UIPanel
 {
-    MainMenu, LoadPatient, BrowseTestHistory, NewTestSetup, None, TestResults
+    MainMenu = 0, NewTestSetup, LoadPatient, BrowseTestHistory, TestResults, None
 }
 
 public class Main : MonoBehaviour
@@ -48,10 +49,7 @@ public class Main : MonoBehaviour
 
     //[HideInInspector]
     public Patient currentPatient = null;
-
-    // holds the most recent test result's generated eyemap
-    //private Texture2D testResultEyeMap;
-    public TestInfo testInfo;
+    //public TestInfo currentTestInfo = null;
 
     // java objects to interface with the SmartHVF-Input library for BT commss
     private AndroidJavaObject unityContext;
@@ -131,6 +129,7 @@ public class Main : MonoBehaviour
     {
         Debug.Log("FileBrowser.ShowLoadDialog canceled");
     }*/
+
 
     public void TestButton_Click()
     {
@@ -342,11 +341,18 @@ public class Main : MonoBehaviour
         // begin test (this will allow the timeout timer to update)
         inTest = true;
 
+        crosshair.GetComponent<Transform>().SetPositionAndRotation(new Vector3(0, 0, 0), Quaternion.identity);
+
         // iterate through stimuli
         //foreach (Stimulus s in shuffledField)
 
+        System.Random rng = new System.Random();
+
         foreach (Stimulus s in testInfo.shuffledField)
+        {
+            s.dimBy((float)rng.NextDouble());
             s.show();
+        }
 
         stimulusSeen = false;
         yield return new WaitUntil(() => stimulusSeen);
@@ -451,6 +457,9 @@ public class Main : MonoBehaviour
         testResultsPanel.SetActive(true);        
         */
 
+        testInfo.generateEyeMap();
+
+        UIPanels[(int)UIPanel.TestResults].GetComponent<TestResultsPanelControl>().lastTest = testInfo;
         setActivePanel(UIPanel.TestResults);
     }
 
@@ -522,12 +531,12 @@ public class Main : MonoBehaviour
         */
 
         // v2 of eyemap sampling
-        Texture2D map2 = testInfo.generateEyeMap();
-        NativeGallery.SaveImageToGallery(map2, "SmartHVF", nowString + "-map2.png");
+        //Texture2D map2 = testInfo.generateEyeMap();
+        //NativeGallery.SaveImageToGallery(map2, "SmartHVF", nowString + "-map2.png");
 
         // get rid of textures
-        Destroy(temp);
-        Destroy(map2);
+        //Destroy(temp);
+        //Destroy(map2);
 
         //hideStimulusField();
         
