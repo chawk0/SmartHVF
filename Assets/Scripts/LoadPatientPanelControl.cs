@@ -2,6 +2,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -55,16 +56,16 @@ public class LoadPatientPanelControl : MonoBehaviour
 
     public void BrowseButton_Click()
     {
-        FileBrowser.ShowLoadDialog(OnBrowseSuccess, OnBrowseCancel, false, false, Application.persistentDataPath, "Load patient file");
+        FileBrowser.ShowLoadDialog(OnBrowseSuccess, OnBrowseCancel, true, false, Application.persistentDataPath, "Load patient file");
     }
 
     private void OnBrowseSuccess(string[] paths)
     {
         Debug.Log("string[] paths length: " + paths.Length + ", paths[0]: " + paths[0]);
 
-        main.currentPatient = Patient.readFromFile(paths[0]);
+        main.currentPatient = Patient.readFromDirectory(paths[0]);
         setPatientDataFields(main.currentPatient);
-        patientDataFilePathTextInput.text = main.currentPatient.dataFileName;
+        patientDataFilePathTextInput.text = main.currentPatient.dataPath + ".xml";
     }
 
     private void OnBrowseCancel()
@@ -85,7 +86,7 @@ public class LoadPatientPanelControl : MonoBehaviour
         main.currentPatient = newPatient;
         newPatient.saveToFile();
 
-        patientDataFilePathTextInput.text = newPatient.dataFileName;
+        patientDataFilePathTextInput.text = newPatient.dataPath + ".xml";
         disableNewPatientMode();
     }
 

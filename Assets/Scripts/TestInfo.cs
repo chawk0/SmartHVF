@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
+using System.Runtime.Serialization;
+using System.Xml;
 using UnityEngine;
 
 // the goal for this class is to encapsulate all relevant data for a given test.
@@ -13,16 +16,28 @@ public enum TestType
     LeftEye,
     RightEye
 }
+
+[DataContract(Name = "TestInfo")]
 public class TestInfo
 {
+    [DataMember(Name = "TestType")]
     public TestType type;
+    [DataMember(Name = "GoldmannSize")]
     public GoldmannSize stimulusSize;
+    [DataMember(Name = "DateTime")]
     public DateTime dateTime;
+    [DataMember(Name = "Duration")]
     public int duration;
+    [DataMember(Name = "PatientID")]
+    public string patientID;
     public Patient patient;
-    public float camOrthoSize, stepSize;
+    [DataMember(Name = "CamOrthoSize")]
+    public float camOrthoSize;
+    public float stepSize;
 
-    public List<Stimulus> stimulusField, shuffledField;
+    [DataMember(Name = "StimulusField")]
+    public List<Stimulus> stimulusField;
+    public List<Stimulus> shuffledField;
     public GameObject stimulusPrefab;
     public Vector3 stimulusFieldBoundsMin, stimulusFieldBoundsMax;
     public Texture2D eyeMap;
@@ -32,6 +47,7 @@ public class TestInfo
     {
         this.type = type;
         this.patient = patient;
+        this.patientID = patient.dataPath;
         this.camOrthoSize = camOrthoSize;
         this.stimulusSize = stimulusSize;
 
@@ -253,5 +269,18 @@ public class TestInfo
         }
         else
             Debug.Log("failed to load eyemap!");
+    }
+
+    public void testSave()
+    {
+        string path = Application.persistentDataPath + "/Patients/" + this.patient.dataPath + "/" + this.dateTime.ToString("yyyyMMdd-HH-mm-ss") + ".xml";
+        Debug.Log("test save to " + path);
+
+        DataContractSerializer s = new DataContractSerializer(this.GetType());
+        FileStream f = File.Create(path);
+        s.WriteObject(f, this);
+        f.Close();
+
+        Debug.Log("Wrote TestInfo object as serialized XML!");
     }
 }
