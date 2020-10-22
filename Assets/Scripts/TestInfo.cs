@@ -10,13 +10,20 @@ using UnityEngine;
 // which eye was tested, the color/background settings, type of test (24-2, for example)
 // the parameters of the stimulus presentation algorithm (TBD), the associated Patient
 // object, the actual stimulus field values, etc.
+//
+// each instance of this class is associated with a Patient object, via both the reference to
+// the actual object and the patient ID.  some class members are serialized and save to
+// XML as noted below with the attributes.  
 
+// simple enum for a type of test.  probably expand this later to include stuff like 24-2,
+// or other field patterns?
 public enum TestType
 {
     LeftEye,
     RightEye
 }
 
+// attributes to allow serializing to XML
 [DataContract(Name = "TestInfo")]
 public class TestInfo
 {
@@ -42,7 +49,8 @@ public class TestInfo
     public Vector3 stimulusFieldBoundsMin, stimulusFieldBoundsMax;
     public Texture2D eyeMap;
 
-
+    // need at least a test type, a patient ref, and a cam's ortho size to make a new instance.
+    // goldmann size defaults to 3 for now.
     public TestInfo(TestType type, Patient patient, float camOrthoSize, GoldmannSize stimulusSize = GoldmannSize.III)
     {
         this.type = type;
@@ -56,6 +64,8 @@ public class TestInfo
 
     ~TestInfo()
     {
+        // WHY aren't these destroying properly?  the game objects are still in
+        // play while running this in game mode in the editor!
         Debug.Log("~TestInfo() called");
         if (stimulusField != null)
         {
@@ -175,12 +185,14 @@ public class TestInfo
         //Debug.Log("shuffled field size: " + this.shuffledField.Count);
     }
 
+    // move the whole stimulus field to the inactive Z plane (behind the camera)
     public void hideStimulusField()
     {
         foreach (Stimulus s in this.stimulusField)
             s.hide();
     }
 
+    // this function is used in generating the grayscale map.
     private float sampleStimulusField(Vector3 pos)
     {
         // construct a list of tuples, storing a reference to a stimulus and the distance from pos
@@ -195,42 +207,54 @@ public class TestInfo
         // ascending sort based on distance (item2 of the tuple)
         distanceList.Sort((x, y) => x.Item2.CompareTo(y.Item2));
 
-        /*
-        // sample the nearest 4
-        float sample = 0;
-        for (int i = 0; i < 4; ++i)
-            sample += ((1.0f - distanceList[i].Item1.brightness) / 4.0f);
-            */
-
-        // sample only stimuli within a certain radius based on stepsize
+        // sample only stimuli within a certain radius based on stepsize.
+        // the scale factor on stepsize is sqrt(2)/2 * 1.1, which is
+        // 10% larger than the radius of a circle that circumscribes a
+        // square of side length stepsize.
         float sample = 0;
         int sampleCount = 0;
         foreach (var t in distanceList)
         {
             if (t.Item2 <= (this.stepSize * 0.7778f))
             {
+                // inverting the brightness/threshold for the grayscale map.
+                // if a bright stimulus isn't seen, then that deficiency shows
+                // up as a dark region on the map.
                 sample += (1.0f - t.Item1.brightness);
                 sampleCount++;
             }
         }
 
+        // just average however many stimuli were in range of sampling
         if (sampleCount > 0)
             return sample / sampleCount;
+        // if somehow none were sampled, just pick the closest stimulus
         else
             return 1.0f - distanceList[0].Item1.brightness;
     }
 
+    // build the higher resolution "grayscale map" from the lower resolution
+    // field of stimuli by sampling through the field at a finer resolution.
+    // the points sampled are determined by a "mask" defined in two separate
+    // .png files under /Resources (one for each eye).  the center of each
+    // pixel is used to sample the stimulus field in worldspace and generate
+    // a brightness value.
     public void generateEyeMap()
     {
         string filePath = (this.type == TestType.LeftEye) ? "eyemap_left" : "eyemap_right";
         Color[] pixelData;
 
+        // load the mask as a texture
         this.eyeMap = Resources.Load<Texture2D>(filePath);
         if (this.eyeMap != null)
         {
+            // since this same texture is used to fill in the Image UI element
+            // in the TestResultsPanel, turn off any filtering to keep the
+            // map in its full blocky goodness.
             this.eyeMap.filterMode = FilterMode.Point;
 
             Debug.Log("texture size: " + this.eyeMap.width + " w x " + this.eyeMap.height + " h");
+            // dump the rgba data into a buffer
             pixelData = this.eyeMap.GetPixels();
 
             // the step size to move for each sample, in world coords
@@ -241,9 +265,10 @@ public class TestInfo
             Vector3 p = new Vector3();
             p.x = this.stimulusFieldBoundsMin.x + mapStepX / 2.0f;
             p.y = this.stimulusFieldBoundsMin.y + mapStepY / 2.0f;
-            p.z = -15.0f;
+            p.z = Stimulus.inactiveZPlane;
 
-            // iterate through the eyemap, using the alpha channel to tell where to sample (a == 1)
+            // iterate through the eyemap mask, using the alpha channel to tell where to sample (a == 1).
+            // after sampling, write the value into the RGB portion.
             for (int y = 0; y < this.eyeMap.height; ++y)
             {
                 // at the start of each row, reset x coord to the left
@@ -264,6 +289,7 @@ public class TestInfo
                 p.y += mapStepY;
             }
 
+            // upload buffer to the texture
             this.eyeMap.SetPixels(pixelData);
             this.eyeMap.Apply();
         }
