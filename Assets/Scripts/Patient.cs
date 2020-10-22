@@ -21,7 +21,7 @@ public class Patient
     [DataMember(Name = "GUID")]
     public string guid;
 
-    [DataMember(Name = "TestHistory")]
+    //[DataMember(Name = "TestHistory")]
     public List<TestInfo> testHistory;
 
     public string dataPath;

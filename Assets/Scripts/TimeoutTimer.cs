@@ -2,12 +2,14 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+// used to time the input timeout during the test
+
 public class TimeoutTimer
 {
     public bool timeout;
+    public float time;
 
-    private float startTime;
-    private float duration;
+    private float lastTime, duration;
 
     public TimeoutTimer()
     {
@@ -17,13 +19,18 @@ public class TimeoutTimer
     public void start(float duration)
     {
         this.duration = duration;
-        this.startTime = Time.time;
-        timeout = false;
+        this.time = 0.0f;
+        this.lastTime = Time.time;
+        this.timeout = false;
     }
 
     public void update()
     {
-        if ((Time.time - startTime) > duration)
+        float t = Time.time;
+        time += (t - lastTime);
+        lastTime = t;
+
+        if (time > duration)
             timeout = true;
     }
 }

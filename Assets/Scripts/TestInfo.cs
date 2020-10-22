@@ -299,7 +299,7 @@ public class TestInfo
 
     public void testSave()
     {
-        string path = Application.persistentDataPath + "/Patients/" + this.patient.dataPath + "/" + this.dateTime.ToString("yyyyMMdd-HH-mm-ss") + ".xml";
+        string path = Application.persistentDataPath + "/Patients/" + this.patient.dataPath + "/" + this.dateTime.ToString("yyyy-MMM-dd-HH-mm-ss") + ".xml";
         Debug.Log("test save to " + path);
 
         DataContractSerializer s = new DataContractSerializer(this.GetType());

@@ -14,7 +14,10 @@ public class TestResultsPanelControl : MonoBehaviour
     private Text patientAgeLabel;
     private Text eyeLabel;
     private Text testDurationLabel;
+    private Text testDateTimeLabel;
     private Image testResultsImage;
+    private Text saveConfirmationLabel;
+    private TimeoutTimer fadeTimer;
 
     void Awake()
     {
@@ -26,7 +29,12 @@ public class TestResultsPanelControl : MonoBehaviour
         patientAgeLabel = GameObject.Find("/Canvas/TestResultsPanel/PatientAgeLabel").GetComponent<Text>();
         eyeLabel = GameObject.Find("/Canvas/TestResultsPanel/EyeLabel").GetComponent<Text>();
         testDurationLabel = GameObject.Find("/Canvas/TestResultsPanel/TestDurationLabel").GetComponent<Text>();
+        testDateTimeLabel = GameObject.Find("/Canvas/TestResultsPanel/TestDateTimeLabel").GetComponent<Text>();
         testResultsImage = GameObject.Find("/Canvas/TestResultsPanel/TestResultsImage").GetComponent<Image>();
+        saveConfirmationLabel = GameObject.Find("/Canvas/TestResultsPanel/SaveConfirmationLabel").GetComponent<Text>();
+
+        saveConfirmationLabel.gameObject.SetActive(false);
+        fadeTimer = new TimeoutTimer();
     }
 
     private void OnEnable()
@@ -49,19 +57,30 @@ public class TestResultsPanelControl : MonoBehaviour
             eyeLabel.text = lastTest.type == TestType.LeftEye ? "Eye: Left" : "Eye: Right";
             TimeSpan d = new TimeSpan(0, 0, lastTest.duration);
             testDurationLabel.text = "Test Duration: " + d.ToString("g");
+            testDateTimeLabel.text = "Test Date: " + lastTest.dateTime.ToString("yyyy-MMM-dd HH:mm:ss");
         }
     }
 
     void Update()
     {
+        if (saveConfirmationLabel.gameObject.activeSelf)
+        {
+            fadeTimer.update();
 
+            if (fadeTimer.time >= 4.0f)
+                saveConfirmationLabel.gameObject.SetActive(false);
+            else if (fadeTimer.time >= 2.0f)
+                saveConfirmationLabel.color = new Color(saveConfirmationLabel.color.r, saveConfirmationLabel.color.g, saveConfirmationLabel.color.b, 1.0f - (fadeTimer.time - 2.0f) / 2.0f);
+        }
     }
 
     public void SaveButton_Click()
     {
         Debug.Log("Save results requested...");
 
-        this.lastTest.testSave();
+        lastTest.testSave();
+        saveConfirmationLabel.gameObject.SetActive(true);
+        fadeTimer.start(2.0f);
     }
 
     public void BackButton_Click()

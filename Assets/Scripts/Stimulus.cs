@@ -13,6 +13,7 @@ public enum GoldmannSize
     I = 0, II, III, IV, V
 }
 
+// attributes for serializing to XML
 [DataContract(Name = "Stimulus")]
 public class Stimulus
 {
@@ -55,11 +56,13 @@ public class Stimulus
         destroy();
     }
 
+    // during testing, a stimulus is made visible by moving it to the active "in test" Z plane
     public void show()
     {
         setZ(Stimulus.inTestZPlane);
     }
 
+    // and hidden by moving it back to the inactive Z plane behind the camera
     public void hide()
     {
         setZ(Stimulus.inactiveZPlane);
@@ -74,6 +77,7 @@ public class Stimulus
         this.material.SetColor("_Color", new Color(this.brightness, this.brightness, this.brightness));
     }
 
+    // this is not working.....?
     public void destroy()
     {
         //Debug.Log("Stimulus.destroy() invoked!");
@@ -90,13 +94,19 @@ public class Stimulus
             Debug.Log("can't destroy, stimulus instance null!");
     }
 
+    // currently, there's no direct correspondence between the sizes here and actual Goldmann sizes
+    // in a real HVF test.  the lowest size is arbitrary for now, and scaled by a factor of 4 in
+    // area as you go up in size, like the real Goldmann sizes do.
+    // later, this can hopefully be calibrated to correspond to a real angular size based on the
+    // optics of the headset, the specs of the screen of the phone in usage, etc.
     private void computeScale(GoldmannSize size)
     {
         // size I to V maps to 0 to 4.  each size is 4x the area as the previous, so x/y scale is doubled
         float newScale = 0.025f * (float)Math.Pow(2.0, (double)size);
-        this.instance.transform.localScale = new Vector3(newScale, newScale, 1.0f);
+        this.instance.transform.localScale = new Vector3(newScale, newScale, 1.0f); // scale only X and Y
     }
 
+    // set both the prefab instance's transform, and the internal position
     private void setZ(float newZ)
     {
         this.instance.transform.SetPositionAndRotation(new Vector3(this.position.x, this.position.y, newZ), Quaternion.identity);

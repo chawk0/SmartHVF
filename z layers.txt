@@ -1,3 +1,5 @@
+various Z layers used in the scene (in world space):
+
 Z = 0		GUI, stimulus field during testing
 
 Z = -1		main camera
