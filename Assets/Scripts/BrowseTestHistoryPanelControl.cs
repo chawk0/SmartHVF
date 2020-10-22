@@ -22,21 +22,34 @@ public class BrowseTestHistoryPanelControl : MonoBehaviour
 
         // get a reference to the Main script
         main = GameObject.Find("AppControl").GetComponent<Main>();
-        patientNameLabel = GameObject.Find("/Canvas/TestResultsPanel/PatientNameLabel").GetComponent<Text>();
-        patientAgeLabel = GameObject.Find("/Canvas/TestResultsPanel/PatientAgeLabel").GetComponent<Text>();
-        eyeLabel = GameObject.Find("/Canvas/TestResultsPanel/EyeLabel").GetComponent<Text>();
-        testDurationLabel = GameObject.Find("/Canvas/TestResultsPanel/TestDurationLabel").GetComponent<Text>();
-        testDateTimeLabel = GameObject.Find("/Canvas/TestResultsPanel/TestDateTimeLabel").GetComponent<Text>();
-        testResultsImage = GameObject.Find("/Canvas/TestResultsPanel/TestResultsImage").GetComponent<Image>();
+        patientNameLabel = GameObject.Find("/Canvas/BrowseTestHistoryPanel/PatientNameLabel").GetComponent<Text>();
+        patientAgeLabel = GameObject.Find("/Canvas/BrowseTestHistoryPanel/PatientAgeLabel").GetComponent<Text>();
+        eyeLabel = GameObject.Find("/Canvas/BrowseTestHistoryPanel/EyeLabel").GetComponent<Text>();
+        testDurationLabel = GameObject.Find("/Canvas/BrowseTestHistoryPanel/TestDurationLabel").GetComponent<Text>();
+        testDateTimeLabel = GameObject.Find("/Canvas/BrowseTestHistoryPanel/TestDateTimeLabel").GetComponent<Text>();
+        testResultsImage = GameObject.Find("/Canvas/BrowseTestHistoryPanel/TestResultsImage").GetComponent<Image>();
     }
 
     private void OnEnable()
     {
-        //
+        Debug.Log("BrowseTestHistoryPanelControl:OnEnable()!");
+
+        if (main.currentPatient == null)
+            Debug.Log("BrowseTestHistoryPanel accessed with null patient!");
+        else
+        {
+            patientNameLabel.text = "Patient Name: " + main.currentPatient.name;
+            patientAgeLabel.text = "Patient Age: " + main.currentPatient.age;
+        }
     }
 
     void Update()
     {
         //
+    }
+
+    public void BackButton_Click()
+    {
+        main.setActivePanel(UIPanel.MainMenu);
     }
 }

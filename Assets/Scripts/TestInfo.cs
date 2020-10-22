@@ -40,13 +40,17 @@ public class TestInfo
     public Patient patient;
     [DataMember(Name = "CamOrthoSize")]
     public float camOrthoSize;
+    [DataMember(Name = "StepSize")]
     public float stepSize;
 
     [DataMember(Name = "StimulusField")]
     public List<Stimulus> stimulusField;
     public List<Stimulus> shuffledField;
     public GameObject stimulusPrefab;
-    public Vector3 stimulusFieldBoundsMin, stimulusFieldBoundsMax;
+    [DataMember(Name = "FieldBoundsMin")]
+    public Vector3 stimulusFieldBoundsMin;
+    [DataMember(Name = "FieldBoundsMax")]
+    public Vector3 stimulusFieldBoundsMax;
     public Texture2D eyeMap;
 
     // need at least a test type, a patient ref, and a cam's ortho size to make a new instance.
@@ -55,7 +59,7 @@ public class TestInfo
     {
         this.type = type;
         this.patient = patient;
-        this.patientID = patient.dataPath;
+        this.patientID = patient.patientID;
         this.camOrthoSize = camOrthoSize;
         this.stimulusSize = stimulusSize;
 
@@ -299,7 +303,7 @@ public class TestInfo
 
     public void testSave()
     {
-        string path = Application.persistentDataPath + "/Patients/" + this.patient.dataPath + "/" + this.dateTime.ToString("yyyy-MMM-dd-HH-mm-ss") + ".xml";
+        string path = Application.persistentDataPath + "/Patients/" + this.patient.patientID + "/" + this.dateTime.ToString("yyyy-MMM-dd-HH-mm-ss") + ".xml";
         Debug.Log("test save to " + path);
 
         DataContractSerializer s = new DataContractSerializer(this.GetType());
@@ -308,5 +312,24 @@ public class TestInfo
         f.Close();
 
         Debug.Log("Wrote TestInfo object as serialized XML!");
+    }
+
+    public static TestInfo loadFromFile(string path)
+    {
+        try
+        {
+            FileStream f = File.Open(path, FileMode.Open);
+            XmlReader reader = XmlReader.Create(f);
+            DataContractSerializer s = new DataContractSerializer(typeof(TestInfo));
+            TestInfo ti = (TestInfo)s.ReadObject(reader, false);
+
+            return ti;
+        }
+        catch (Exception e)
+        {
+            Debug.Log("Failed to read serialized TestInfo object!  reason: " + e.Message);
+
+            return null;
+        }
     }
 }

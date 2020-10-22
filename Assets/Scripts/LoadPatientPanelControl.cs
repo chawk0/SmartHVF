@@ -65,7 +65,7 @@ public class LoadPatientPanelControl : MonoBehaviour
 
         main.currentPatient = Patient.readFromDirectory(paths[0]);
         setPatientDataFields(main.currentPatient);
-        patientDataFilePathTextInput.text = main.currentPatient.dataPath + ".xml";
+        patientDataFilePathTextInput.text = main.currentPatient.patientID + ".xml";
     }
 
     private void OnBrowseCancel()
@@ -86,7 +86,7 @@ public class LoadPatientPanelControl : MonoBehaviour
         main.currentPatient = newPatient;
         newPatient.saveToFile();
 
-        patientDataFilePathTextInput.text = newPatient.dataPath + ".xml";
+        patientDataFilePathTextInput.text = newPatient.patientID + ".xml";
         disableNewPatientMode();
     }
 

@@ -80,7 +80,9 @@ public class TestResultsPanelControl : MonoBehaviour
 
         lastTest.testSave();
         saveConfirmationLabel.gameObject.SetActive(true);
-        fadeTimer.start(2.0f);
+        //#7FFF7F
+        saveConfirmationLabel.color = new Color(127.0f / 255.0f, 1.0f, 127.0f / 255.0f);
+        fadeTimer.start(4.0f);
     }
 
     public void BackButton_Click()

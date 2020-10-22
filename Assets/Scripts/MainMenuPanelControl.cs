@@ -50,6 +50,11 @@ public class MainMenuPanelControl : MonoBehaviour
         main.setActivePanel(UIPanel.LoadPatient);
     }
 
+    public void BrowseTestHistoryButton_Click()
+    {
+        main.setActivePanel(UIPanel.BrowseTestHistory);
+    }
+
     public void ExitButton_Click()
     {
         Application.Quit();
