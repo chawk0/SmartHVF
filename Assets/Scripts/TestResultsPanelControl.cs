@@ -79,6 +79,7 @@ public class TestResultsPanelControl : MonoBehaviour
         Debug.Log("Save results requested...");
 
         lastTest.testSave();
+        saveConfirmationLabel.text = "Saved as " + lastTest.dateTime.ToString("yyyy-MMM-dd-HH-mm-ss") + ".xml!";
         saveConfirmationLabel.gameObject.SetActive(true);
         //#7FFF7F
         saveConfirmationLabel.color = new Color(127.0f / 255.0f, 1.0f, 127.0f / 255.0f);

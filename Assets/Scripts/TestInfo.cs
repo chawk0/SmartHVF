@@ -62,6 +62,7 @@ public class TestInfo
         this.patientID = patient.patientID;
         this.camOrthoSize = camOrthoSize;
         this.stimulusSize = stimulusSize;
+        this.eyeMap = null;
 
         buildStimulusField();
     }
