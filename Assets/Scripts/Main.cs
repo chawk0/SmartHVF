@@ -90,13 +90,14 @@ public class Main : MonoBehaviour
 
         // setup the Android Java objects that let us communicate to the SmartHVF-Input project and
         // receive bluetooth comms
-        /*
+
+        Debug.Log("Atempting to start BT library...");
         AndroidJavaClass player = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
         unityContext = player.GetStatic<AndroidJavaObject>("currentActivity");
 
         btLib = new AndroidJavaObject("com.example.testlibrary.TestClass");
-        //btLib.Call("InitBluetooth", new object[] { unityContext });
-        */
+        btLib.Call("InitBluetooth", new object[] { unityContext });
+        
 
         //Patient p = new Patient("Philip Lancaster", 20);
         //p.testSerialize();

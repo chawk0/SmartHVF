@@ -70,13 +70,13 @@ public class BrowseTestHistoryPanelControl : MonoBehaviour
     {
         foreach (TestInfo ti in lastPatient.testHistory)
         {
-            GameObject newLogItem = Instantiate(listItemTemplate) as GameObject;
-            newLogItem.SetActive(true);
+            GameObject newListItem = Instantiate(listItemTemplate) as GameObject;
+            newListItem.SetActive(true);
             string text = ti.dateTime.ToString("yyyy-MMM-dd HH:mm:ss") + ", " + (ti.type == TestType.LeftEye ? "left" : "right");
-            newLogItem.GetComponent<TestHistoryListItem>().setData(text, ti);
-            newLogItem.transform.SetParent(listItemTemplate.transform.parent, false);
+            newListItem.GetComponent<TestHistoryListItem>().setData(text, ti);
+            newListItem.transform.SetParent(listItemTemplate.transform.parent, false);
 
-            testHistoryList.Add(newLogItem);
+            testHistoryList.Add(newListItem);
         }
     }
 
@@ -100,7 +100,7 @@ public class BrowseTestHistoryPanelControl : MonoBehaviour
         if (ti.eyeMap == null)
             ti.generateEyeMap();
 
-        testResultsImage.sprite = Sprite.Create(ti.eyeMap, new Rect(0, 0, ti.eyeMap.width, ti.eyeMap.height), Vector2.zero);
+        testResultsImage.overrideSprite = ti.eyeMapSprite;//Sprite.Create(ti.eyeMap, new Rect(0, 0, ti.eyeMap.width, ti.eyeMap.height), Vector2.zero);
     }
 
     void Update()

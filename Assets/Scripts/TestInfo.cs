@@ -52,6 +52,7 @@ public class TestInfo
     [DataMember(Name = "FieldBoundsMax")]
     public Vector3 stimulusFieldBoundsMax;
     public Texture2D eyeMap;
+    public Sprite eyeMapSprite;
 
     // need at least a test type, a patient ref, and a cam's ortho size to make a new instance.
     // goldmann size defaults to 3 for now.
@@ -63,6 +64,7 @@ public class TestInfo
         this.camOrthoSize = camOrthoSize;
         this.stimulusSize = stimulusSize;
         this.eyeMap = null;
+        this.eyeMapSprite = null;
 
         buildStimulusField();
     }
@@ -297,6 +299,8 @@ public class TestInfo
             // upload buffer to the texture
             this.eyeMap.SetPixels(pixelData);
             this.eyeMap.Apply();
+
+            this.eyeMapSprite = Sprite.Create(this.eyeMap, new Rect(0, 0, this.eyeMap.width, this.eyeMap.height), Vector2.zero);
         }
         else
             Debug.Log("failed to load eyemap!");
